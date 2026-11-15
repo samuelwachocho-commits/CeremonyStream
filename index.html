@@ -56,6 +56,19 @@ try{var q=new URLSearchParams(location.search).get("c");
  if(q){var o=JSON.parse(decodeURIComponent(escape(atob(q.replace(/-/g,"+").replace(/_/g,"/")))));
   for(var k in o){if(o[k]&&typeof o[k]==="object"&&C[k])Object.assign(C[k],o[k]);}
   LIVE=true;}}catch(e){}
+var USEQ=LIVE,IN_CLAUDE=!!(window.claude&&claude.use),EDIT=/[?&]edit(&|=|$)/.test(location.search),lastRemote="";
+if(!IN_CLAUDE&&!EDIT)LIVE=true;
+function mergeCfg(o){for(var k in o){if(o[k]&&typeof o[k]==="object"&&C[k])Object.assign(C[k],o[k]);}}
+function ghInfo(){var h=location.hostname;if(!/\.github\.io$/.test(h))return null;var owner=h.split(".")[0];
+  var seg=location.pathname.split("/").filter(Boolean)[0];if(!seg||/\.html?$/.test(seg))seg=owner+".github.io";return {owner:owner,repo:seg};}
+async function loadRemote(){
+  try{var gi=ghInfo(),r;
+    if(gi){r=await fetch("https://api.github.com/repos/"+gi.owner+"/"+gi.repo+"/contents/config.json",{headers:{Accept:"application/vnd.github.raw+json"},cache:"no-store"});}
+    else{r=await fetch("config.json?t="+Date.now(),{cache:"no-store"});}
+    if(!r.ok)return;var t=await r.text();if(t===lastRemote)return;
+    var o=JSON.parse(t);lastRemote=t;mergeCfg(o);renderBanner();
+  }catch(e){}
+}
 
 function ord(n){var j=n%10,k=n%100;if(j==1&&k!=11)return n+"ST";if(j==2&&k!=12)return n+"ND";if(j==3&&k!=13)return n+"RD";return n+"TH";}
 function nextSunday(){var d=new Date();d.setDate(d.getDate()+(7-d.getDay())%7);
@@ -209,13 +222,30 @@ function buildPanel(){
     var b=el("button",null,"Save banner");b.onclick=save;panel.appendChild(b);panel.appendChild(m);
     panel.appendChild(el("div","hint","Changes show here at once. Press Save so the stream (Prism) shows them too."));
   }else{
-    var b2=el("button",null,"Make link for Prism");var ta=el("textarea");ta.rows=4;ta.readOnly=true;ta.style.marginTop="10px";
-    b2.onclick=function(){var o=JSON.parse(JSON.stringify(C));delete o.logo.src;
-      var t=btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
-      var link=location.origin+location.pathname+"?c="+t;ta.value=link;ta.select();
-      try{navigator.clipboard.writeText(link);m.textContent="Link made. Copy it and paste it in Prism as the web page address.";}catch(e){m.textContent="Link made. Press and hold the box, copy it, and paste it in Prism.";}};
-    panel.appendChild(b2);panel.appendChild(ta);panel.appendChild(m);
-    panel.appendChild(el("div","hint","Edit above, press Make link, then paste that link in Prism. Open the link in Prism: the editing box is hidden there."));
+    var tl=el("label",null,"GitHub token (one time, stays on this phone only)"),ti=el("input");ti.type="text";ti.placeholder="github_pat_...";
+    try{ti.value=localStorage.getItem("ghtok")||"";}catch(e){}
+    ti.onchange=function(){try{localStorage.setItem("ghtok",ti.value.trim());}catch(e){}};
+    tl.appendChild(ti);panel.appendChild(tl);
+    var b2=el("button",null,"Save online");
+    b2.onclick=async function(){
+      var gi=ghInfo();
+      if(!gi){m.textContent="Open this page from your GitHub Pages link (name.github.io/...) to save.";return;}
+      var tok=ti.value.trim();if(!tok){m.textContent="Paste your GitHub token first.";return;}
+      try{localStorage.setItem("ghtok",tok);}catch(e){}
+      m.textContent="Saving...";
+      var api="https://api.github.com/repos/"+gi.owner+"/"+gi.repo+"/contents/config.json";
+      var H={Authorization:"Bearer "+tok,Accept:"application/vnd.github+json"};
+      try{
+        var g=await fetch(api,{headers:H,cache:"no-store"}),sha;
+        if(g.ok){sha=(await g.json()).sha;}
+        var body={message:"Update banner",content:btoa(unescape(encodeURIComponent(JSON.stringify(C))))};
+        if(sha)body.sha=sha;
+        var p=await fetch(api,{method:"PUT",headers:Object.assign({"Content-Type":"application/json"},H),body:JSON.stringify(body)});
+        m.textContent=p.ok?"Saved online. The stream shows it within about 2 minutes.":"Could not save (error "+p.status+"). Check the token.";
+      }catch(e){m.textContent="Could not save. Check your internet.";}
+    };
+    panel.appendChild(b2);panel.appendChild(m);
+    panel.appendChild(el("div","hint","Press Save online. The Prism link stays the same and updates by itself."));
   }
   app.appendChild(panel);
 }
@@ -232,10 +262,8 @@ async function save(){
 }
 
 renderBanner();
-if(!LIVE){
-  if(window.claude&&claude.use){try{claude.use("artifact").then(function(a){ART=a;if(a)buildPanel();}).catch(function(){});}catch(e){}}
-  else buildPanel();
-}
+if(IN_CLAUDE){try{claude.use("artifact").then(function(a){ART=a;if(a)buildPanel();}).catch(function(){});}catch(e){}}
+else if(!USEQ){loadRemote().then(function(){if(EDIT)buildPanel();else setInterval(loadRemote,120000);});}
 })();
 </script>
 </body>
