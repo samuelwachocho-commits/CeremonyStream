@@ -37,7 +37,7 @@ body{margin:0;background:var(--bg);color:var(--fg);font-family:Arial,Helvetica,s
 .gal .pv canvas{width:100%;height:auto;display:block;border:1px solid #888}
 .gal .guide{position:absolute;left:24%;top:7%;width:52%;height:60%;border:2px dashed rgba(255,0,0,.75);border-radius:50%;pointer-events:none}
 
-.banner.lay-tv{display:block;background:transparent;overflow:visible;box-shadow:none}
+.banner.lay-tv{display:block;background:var(--bg);overflow:visible;box-shadow:none}
 .lay-tv .tvgrid{display:grid;grid-template-columns:auto 1fr}
 .lay-tv .tvtag{grid-column:2;grid-row:1;justify-self:end;background:#fff;color:#1b2a4e;font-size:clamp(7px,1.2vw,12px);font-weight:600;padding:2px 12px;border-radius:8px 8px 0 0}
 .banner .tvlogo{grid-column:1;grid-row:2/4;background:linear-gradient(180deg,#fff,#fde9db);border-radius:14px 0 0 14px;padding:3px 10px;display:flex;align-items:stretch}
@@ -83,7 +83,7 @@ body{margin:0;background:var(--bg);color:var(--fg);font-family:Arial,Helvetica,s
 @keyframes barcolors{0%,100%{background:#ff3b3b}20%{background:#ffd84a}40%{background:#3bff7a}60%{background:#3bc8ff}80%{background:#b03bff}}
 @keyframes barslide{0%{transform:translateX(-105%)}12%,82%{transform:none}95%,100%{transform:translateX(105%)}}
 
-.banner{position:relative}
+.banner{position:sticky;top:0;z-index:50}
 .fx-float{animation:bfloat var(--bs,3s) ease-in-out infinite}
 .fx-glow{animation:bglow var(--bs,3s) ease-in-out infinite}
 .fx-rainbow{animation:brain calc(var(--bs,3s)*1.5) linear infinite}
@@ -171,6 +171,18 @@ function ord(n){var j=n%10,k=n%100;if(j==1&&k!=11)return n+"ST";if(j==2&&k!=12)r
 function nextSunday(){var d=new Date();d.setDate(d.getDate()+(7-d.getDay())%7);
  var m=["JANUARY","FEBRUARY","MARCH","APRIL","MAY","JUNE","JULY","AUGUST","SEPTEMBER","OCTOBER","NOVEMBER","DECEMBER"][d.getMonth()];
  return "SUNDAY SERVICE "+ord(d.getDate())+" "+m+" "+d.getFullYear();}
+var FONTS=[["Arial",null],["Georgia",null],["Impact",null],["Verdana",null],["Times New Roman",null],["Oswald","wght@400;700"],["Bebas Neue",""],["Anton",""],["Montserrat","wght@400;700;900"],["Poppins","wght@400;700;900"],["Roboto","wght@400;700;900"],["Lato","wght@400;700;900"],["Raleway","wght@400;700;900"],["Nunito","wght@400;700;900"],["Playfair Display","wght@400;700;900"],["Merriweather","wght@400;700;900"],["Lobster",""],["Pacifico",""],["Dancing Script","wght@400;700"],["Bangers",""]];
+var FONTS_DONE={};
+function ensureFont(name){
+  if(!name||FONTS_DONE[name])return;FONTS_DONE[name]=1;
+  var spec=null;FONTS.forEach(function(f){if(f[0]===name)spec=f[1];});
+  if(spec===null)return;
+  var l=document.createElement("link");l.rel="stylesheet";
+  l.href="https://fonts.googleapis.com/css2?family="+name.replace(/ /g,"+")+(spec?":"+spec:"")+"&display=swap";
+  l.onload=function(){var done=function(){renderBanner();};
+    if(document.fonts&&document.fonts.load){document.fonts.load("700 20px \""+name+"\"").then(done,done);}else done();};
+  document.head.appendChild(l);
+}
 function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;}
 
 var FX={drop:["translateY(-100%)","translateY(100%)"],rotate:["rotate(-14deg) scale(.4)","rotate(14deg) scale(1.5)"],skew:["skewX(45deg) translateX(100%)","skewX(-45deg) translateX(-100%)"],wave:["none","none"],up:["translateY(100%)","translateY(-100%)"],fade:["none","none"],zoom:["scale(.6)","scale(1.4)"],flip:["rotateX(90deg)","rotateX(-90deg)"],blur:["none","none","inset(0)","inset(0)","blur(10px)","blur(10px)"],wipe:["none","none","inset(0 100% 0 0)","inset(0 0 0 100%)"],letters:["none","none"],side:["translateX(100%)","translateX(-100%)"]};
@@ -198,7 +210,7 @@ function renderBanner(){
   if(banner)banner.remove();
   clearInterval(timer);clearInterval(clk);gen++;var myGen=gen;
   banner=el("div","banner lay-"+(C.layout||"bars")+(C.anim.banner&&C.anim.banner!=="none"?" fx-"+C.anim.banner:"")+(C.anim.fx==="wave"?" wavefx":""));banner.style.setProperty("--bs",(C.anim.bsecs||3)+"s");banner.style.setProperty("--bars",(C.anim.barsecs||3)+"s");
-  var s=banner.style, f=FX[C.anim.fx]||FX.up;
+  var s=banner.style, f=FX[C.anim.fx]||FX.up;s.fontFamily=C.font?"'"+C.font+"',Arial,Helvetica,sans-serif":"";ensureFont(C.font);
   s.setProperty("--enter",f[0]);s.setProperty("--leave",f[1]);s.setProperty("--cin",f[2]||"inset(0)");s.setProperty("--cout",f[3]||"inset(0)");s.setProperty("--fin",f[4]||"none");s.setProperty("--fout",f[5]||"none");s.setProperty("--shine",C.anim.shineSecs+"s");
   if(C.logo.show&&C.logo.src){
     var lg=el("div","logo"),im=el("img");im.alt="logo";if(C.logo.anim&&C.logo.anim!=="none")im.className="lg-"+C.logo.anim;im.src=C.logo.src;im.style.height="clamp(40px,"+C.logo.size+"vw,"+(C.logo.size*10)+"px)";
@@ -237,7 +249,7 @@ function renderBanner(){
     if(vis[2])bt.appendChild(L[2].box);if(vis[2]||C.clock)grid.appendChild(bt);
     rest.remove();banner.appendChild(grid);
   }
-  if(LIVE){document.body.style.cssText="padding:0;background:transparent";if(C.layout!=="card")banner.style.maxWidth="none";if(!C.layout||C.layout==="bars"||C.layout==="ticker")banner.style.borderRadius="0";banner.style.boxShadow="none";banner.style.margin="0";}
+  if(LIVE){document.body.style.cssText="padding:0;background:transparent";if(C.layout==="tv"||C.layout==="person")banner.style.background="transparent";if(C.layout!=="card")banner.style.maxWidth="none";if(!C.layout||C.layout==="bars"||C.layout==="ticker")banner.style.borderRadius="0";banner.style.boxShadow="none";banner.style.margin="0";}
   app.insertBefore(banner,app.firstChild);
   if(C.layout==="ticker"){var tk=L[0].track,tb=L[0].box;var go=function(){var cw=tb.clientWidth,tw=tk.offsetWidth;tk.style.setProperty("--from",cw+"px");tk.style.setProperty("--to",(-tw)+"px");tk.style.animationDuration=((cw+tw)/Math.max(20,C.anim.tickerSpeed||90))+"s";};go();setTimeout(go,300);}
   L.forEach(function(x){if(x.slides[0])x.slides[0].classList.add("on");fit(x);});
@@ -301,8 +313,8 @@ function field(parent,label,type,get,set,extra){
 }
 function colorRow(parent,items){var r=el("div","row");items.forEach(function(it){field(r,it[0],"color",it[1],it[2]);});parent.appendChild(r);}
 
-/* ===== speaker photo gallery ===== */
-var GW=360,GH=450,gal=null,GE=null,THUMB={},thumbQ=Promise.resolve();
+/* ===== speaker photo gallery (photos saved in folders on this phone, no token) ===== */
+var GW=360,GH=450,gal=null;
 var PRESETS={
  base:{l1:{bg1:"#ff7a00",bg2:"#ff9a1f",fg:"#ffffff",size:1.9},l2:{bg:"#12306b",fg:"#ffd84a",size:2.4},l3:{bg:"#ffffff",fg:"#111111",size:1.8}},
  tv:{l1:{bg1:"#ff7a14",bg2:"#f04a1a",fg:"#ffffff",size:2.6},l2:{bg:"#f8efe9",fg:"#1b2a4e",size:2.2},l3:{bg:"#e9eef2",fg:"#1b2a4e",size:1.7},tag:"Be the light in someone's darkness",clock:true},
@@ -310,295 +322,67 @@ var PRESETS={
 };
 function g_preset(v){var p=PRESETS[v]||PRESETS.base;["l1","l2","l3"].forEach(function(k){Object.assign(C[k],p[k]);});if(p.tag!==undefined)C.tag=p.tag;if(p.clock!==undefined)C.clock=p.clock;}
 function g_slug(s){return String(s||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"")||"speaker";}
-function g_auth(){var gi=ghInfo(),tok="";try{tok=localStorage.getItem("ghtok")||"";}catch(e){}return(gi&&tok)?{gi:gi,tok:tok}:null;}
-function g_call(method,path,body){var a=g_auth();if(!a)return Promise.reject(new Error("no token"));
-  return fetch("https://api.github.com/repos/"+a.gi.owner+"/"+a.gi.repo+"/contents/"+path,{method:method,cache:"no-store",headers:{Authorization:"Bearer "+a.tok,Accept:"application/vnd.github+json","Content-Type":"application/json"},body:body?JSON.stringify(body):undefined});}
-async function g_list(){
-  var r=await g_call("GET","photos");
-  if(r.status===404)return [];
-  if(!r.ok)throw new Error("error "+r.status);
-  var dirs=(await r.json()).filter(function(x){return x.type==="dir";}),out=[];
-  for(var i=0;i<dirs.length;i++){
-    var fr=await g_call("GET","photos/"+dirs[i].name);if(!fr.ok)continue;
-    var files=(await fr.json()).filter(function(f){return f.type==="file"&&/\.jpg$/.test(f.name)&&f.name.indexOf("original-")!==0;});
-    if(files.length)out.push({folder:dirs[i].name,files:files});
-  }
-  return out;
-}
-async function g_data(path){var r=await g_call("GET",path);if(!r.ok)throw new Error("read "+r.status);var j=await r.json();return "data:image/jpeg;base64,"+String(j.content||"").replace(/\s/g,"");}
-async function g_put(path,dataUrl,msg){
-  var sha,g=await g_call("GET",path);if(g.ok){sha=(await g.json()).sha;}
-  var body={message:msg,content:dataUrl.split(",")[1]};if(sha)body.sha=sha;
-  var r=await g_call("PUT",path,body);if(!r.ok)throw new Error("save "+r.status);
-}
-async function g_del(path){var g=await g_call("GET",path);if(!g.ok)return;var j=await g.json();var r=await g_call("DELETE",path,{message:"Delete photo",sha:j.sha});if(!r.ok)throw new Error("delete "+r.status);}
+function p_load(){try{return JSON.parse(localStorage.getItem("ndcphotos")||"{}");}catch(e){return {};}}
+function p_store(o){try{localStorage.setItem("ndcphotos",JSON.stringify(o));return true;}catch(e){return false;}}
 function g_btn(t,cls,fn){var b=el("button",cls||null,t);b.onclick=fn;return b;}
 function g_lab(t,input,cls){var l=el("label",cls||null,t);l.appendChild(input);return l;}
-function g_why(s){return s===401?"The token was not accepted. It may be wrong or expired.":s===403?"The token cannot write to this repo. It needs Contents: Read and write.":s===404?"Repo or access not found. Check the repo name, and that the token includes this repo.":"GitHub said error "+s+".";}
-function g_conn(){
-  var box=el("div");box.appendChild(el("h3",null,"Connection to GitHub"));
-  var gi=ghInfo(),ri=el("input");ri.type="text";ri.placeholder="yourname/reponame";ri.value=gi?gi.owner+"/"+gi.repo:"";
-  var ti=el("input");ti.type="text";ti.placeholder="github_pat_...";try{ti.value=localStorage.getItem("ghtok")||"";}catch(e){}
-  var st=el("div","st",g_auth()?"Saved on this phone.":"Not connected yet.");
-  box.appendChild(g_lab("Repo (yourname/reponame)",ri));
-  box.appendChild(g_lab("GitHub token",ti));
-  box.appendChild(g_btn("Save and test connection",null,function(){g_test(ri.value.trim(),ti.value.trim(),st);}));
-  box.appendChild(st);return box;
-}
-async function g_test(repo,tok,st){
-  if(!/^[\w.-]+\/[\w.-]+$/.test(repo)){st.textContent="Type the repo like this: yourname/reponame";return;}
-  tok=tok.replace(/\s+/g,"").replace(/^["']|["']$/g,"");
-  if(!tok){st.textContent="Paste your token first.";return;}
-  if(!/^(github_pat_|ghp_)/.test(tok)){st.textContent="That does not look like a GitHub token. It should be one long piece starting with github_pat_ or ghp_. You pasted "+tok.length+" characters.";return;}
-  try{localStorage.setItem("ghrepo",repo);localStorage.setItem("ghtok",tok);}catch(e){}
-  st.textContent="Testing...";
-  try{
-    var r=await g_call("GET","photos/.keep"),body={message:"Connection test",content:btoa("ok")};
-    if(r.ok){body.sha=(await r.json()).sha;}
-    var w=await g_call("PUT","photos/.keep",body);
-    if(w.ok){g_home("Connected. You can add photos now.");return;}
-    st.textContent=g_why(w.status)+(w.status===401?" You pasted "+tok.length+" characters. A full token is about 93 (github_pat_...) or 40 (ghp_...).":"");
-  }catch(e){st.textContent="Could not reach GitHub. Check your internet.";}
-}
 function g_open(){if(gal)return;gal=el("div","gal");document.body.appendChild(gal);g_home();}
-function g_close(){if(gal){gal.remove();gal=null;}GE=null;}
-function g_thumb(path,im){
-  if(THUMB[path]){im.src=THUMB[path];return;}
-  thumbQ=thumbQ.then(function(){return g_data(path).then(function(u){THUMB[path]=u;im.src=u;}).catch(function(){});});
-}
-function g_home(msg){
-  gal.innerHTML="";GE=null;
-  gal.appendChild(el("h2",null,"Speaker photos"));
-  gal.appendChild(g_btn("Close","sec",g_close));
-  gal.appendChild(g_conn());
-  if(!g_auth()){gal.appendChild(el("div","st","Fill in the repo and the token above, then press Save and test connection."));return;}
-  var add=el("div");add.appendChild(el("h3",null,"Add a new photo"));
-  var ni=el("input");ni.type="text";ni.placeholder="For example: Samuel";
-  add.appendChild(g_lab("Name (you can also type it on the next screen)",ni));
-  var st=el("div","st",msg||"");
-  var fi=el("input");fi.type="file";fi.accept="image/*";
-  fi.onchange=function(){var f=fi.files&&fi.files[0];if(!f)return;g_edit({name:ni.value.trim(),src:URL.createObjectURL(f),existing:null});};
-  add.appendChild(g_lab("Picture (from your gallery or camera)",fi));
-  add.appendChild(st);gal.appendChild(add);
-  gal.appendChild(el("h3",null,"Saved photos"));
-  var box=el("div","st","Loading...");gal.appendChild(box);
-  g_list().then(function(folders){
-    box.textContent="";
-    if(!folders.length){box.textContent="No photos yet. Add the first one above.";return;}
-    folders.forEach(function(fo){
-      box.appendChild(el("h3",null,fo.folder));
-      box.appendChild(g_btn("Delete folder","bad",function(){g_delFolder(fo.folder);}));
-      var grid=el("div","grid");
-      fo.files.forEach(function(f){
-        var card=el("div","card"),im=el("img");im.alt=f.name;card.appendChild(im);g_thumb(f.path,im);
-        card.appendChild(g_btn("Use",null,function(){g_useFile(fo.folder,f);}));
-        card.appendChild(g_btn("Edit","sec",function(){g_editFile(fo.folder,f);}));
-        card.appendChild(g_btn("Delete","bad",function(){g_delFile(fo.folder,f);}));
-        grid.appendChild(card);});
-      box.appendChild(grid);});
-  }).catch(function(e){var cd=(String(e.message).match(/\d{3}/)||[])[0];box.textContent="Could not load the gallery. "+(cd?g_why(+cd):"Check your internet.");});
-}
-function g_use(path,folder,u){
-  C.photo={src:u,path:path,name:folder};
+function g_close(){if(gal){gal.remove();gal=null;}}
+function g_use(name,u){
+  C.photo={src:u,name:name};
   if(C.layout!=="person"&&confirm("Switch the banner style to Person so the photo shows?")){C.layout="person";g_preset("person");}
   renderBanner();if(panel)rebuildPanel();g_close();
 }
-async function g_useFile(folder,f){try{var u=THUMB[f.path]||await g_data(f.path);THUMB[f.path]=u;g_use(f.path,folder,u);}catch(e){g_home("Could not open the photo ("+e.message+").");}}
-async function g_delFile(folder,f){
-  if(!confirm("Delete this photo?"))return;
-  try{await g_del(f.path);await g_del("photos/"+folder+"/original-"+f.name);delete THUMB[f.path];g_home("Photo deleted.");}
-  catch(e){g_home("Could not delete ("+e.message+").");}
-}
-async function g_delFolder(folder){
-  if(!confirm("Delete the whole folder "+folder+" and all its photos?"))return;
-  try{var r=await g_call("GET","photos/"+folder);if(r.ok){var fs=await r.json();for(var i=0;i<fs.length;i++){await g_del(fs[i].path);delete THUMB[fs[i].path];}}g_home("Folder deleted.");}
-  catch(e){g_home("Could not delete ("+e.message+").");}
-}
-async function g_editFile(folder,f){
-  gal.innerHTML="";gal.appendChild(el("div","st","Loading..."));
-  var src;try{try{src=await g_data("photos/"+folder+"/original-"+f.name);}catch(e){src=await g_data(f.path);}}
-  catch(e){g_home("Could not open the photo ("+e.message+").");return;}
-  g_edit({name:folder,src:src,existing:{folder:folder,file:f.name}});
-}
-function g_edit(opts){
+function g_home(msg){
   gal.innerHTML="";
-  gal.appendChild(el("h2",null,opts.existing?"Edit photo":"New photo"));
-  var status=el("div","st","Loading picture...");gal.appendChild(status);
+  gal.appendChild(el("h2",null,"Speaker photos"));
+  gal.appendChild(g_btn("Close","sec",g_close));
+  var add=el("div");add.appendChild(el("h3",null,"Upload a new photo"));
+  var ni=el("input");ni.type="text";ni.placeholder="For example: Samuel";
+  add.appendChild(g_lab("Name of the person (this is the folder name)",ni));
+  var st=el("div","st",msg||"");
+  var fi=el("input");fi.type="file";fi.accept="image/*";
+  fi.onchange=function(){var f=fi.files&&fi.files[0];if(!f)return;g_upload(ni.value.trim(),f,st);fi.value="";};
+  add.appendChild(g_lab("Choose a picture (gallery or camera)",fi));
+  add.appendChild(st);gal.appendChild(add);
+  gal.appendChild(el("h3",null,"Select a saved photo"));
+  var all=p_load(),keys=Object.keys(all);
+  if(!keys.length){gal.appendChild(el("div","st","No photos yet. Upload the first one above."));return;}
+  keys.forEach(function(k){
+    var fo=all[k];
+    gal.appendChild(el("h3",null,fo.name));
+    gal.appendChild(g_btn("Delete folder","bad",function(){
+      if(!confirm("Delete the whole folder "+fo.name+" and all its photos?"))return;
+      delete all[k];p_store(all);g_home("Folder deleted.");}));
+    var grid=el("div","grid");
+    fo.photos.forEach(function(u,idx){
+      var card=el("div","card"),im=el("img");im.alt=fo.name;im.src=u;card.appendChild(im);
+      card.appendChild(g_btn("Use",null,function(){g_use(fo.name,u);}));
+      card.appendChild(g_btn("Delete","bad",function(){
+        if(!confirm("Delete this photo?"))return;
+        fo.photos.splice(idx,1);if(!fo.photos.length)delete all[k];p_store(all);g_home("Photo deleted.");}));
+      grid.appendChild(card);});
+    gal.appendChild(grid);});
+}
+/* upload: centre-crop to 4:5, no editing, save in the person's folder */
+function g_upload(name,file,st){
+  if(!name){st.textContent="Type the name of the person first.";return;}
+  st.textContent="Saving...";
   var im=new Image();
-  im.onerror=function(){status.textContent="Could not open this picture.";gal.appendChild(g_btn("Back","sec",function(){g_home();}));};
+  im.onerror=function(){st.textContent="Could not open this picture.";};
   im.onload=function(){
-    var sc=Math.min(1,900/Math.max(im.width,im.height)),S=document.createElement("canvas");
-    S.width=Math.max(1,Math.round(im.width*sc));S.height=Math.max(1,Math.round(im.height*sc));
-    S.getContext("2d").drawImage(im,0,0,S.width,S.height);
-    g_editor(opts,S,status);
+    var cv=document.createElement("canvas");cv.width=GW;cv.height=GH;
+    var c=cv.getContext("2d");c.fillStyle="#ffffff";c.fillRect(0,0,GW,GH);
+    var sc=Math.max(GW/im.width,GH/im.height),w=im.width*sc,h=im.height*sc;
+    c.imageSmoothingQuality="high";
+    c.drawImage(im,(GW-w)/2,Math.min(0,(GH-h)*0.15),w,h);
+    var data=cv.toDataURL("image/jpeg",.85),all=p_load(),k=g_slug(name);
+    if(!all[k])all[k]={name:name,photos:[]};
+    all[k].photos.push(data);
+    if(!p_store(all)){st.textContent="Could not save: the phone storage for this page is full. Delete some photos.";return;}
+    g_home("Saved in the folder "+all[k].name+".");
   };
-  im.src=opts.src;
-}
-/* ---- image processing ---- */
-function g_dist(d,i,r,g,b){var dr=d[i]-r,dg=d[i+1]-g,db=d[i+2]-b;return Math.sqrt(dr*dr+dg*dg+db*db);}
-function g_median(a){a.sort(function(x,y){return x-y;});return a.length?a[a.length>>1]:0;}
-function g_blur(M,w,h){var T=new Uint8ClampedArray(M.length);
-  for(var y=0;y<h;y++){for(var x=0;x<w;x++){var s=0,c=0;
-    for(var dy=-1;dy<=1;dy++){var yy=y+dy;if(yy<0||yy>=h)continue;for(var dx=-1;dx<=1;dx++){var xx=x+dx;if(xx<0||xx>=w)continue;s+=M[yy*w+xx];c++;}}
-    T[y*w+x]=s/c;}}
-  return T;}
-function g_autoMask(sd,tol){
-  var w=sd.width,h=sd.height,d=sd.data,N=w*h,rs=[],gs=[],bs=[],bw=Math.max(2,Math.round(Math.min(w,h)*.03));
-  for(var y=0;y<h*.7;y+=2){for(var x=0;x<w;x+=2){if(y<bw||x<bw||x>=w-bw){var i=(y*w+x)*4;rs.push(d[i]);gs.push(d[i+1]);bs.push(d[i+2]);}}}
-  var mr=g_median(rs),mg=g_median(gs),mb=g_median(bs);
-  var M=new Uint8ClampedArray(N).fill(255),vis=new Uint8Array(N),q=new Int32Array(N),qh=0,qt=0;
-  function seed(x,y){var p=y*w+x;if(vis[p])return;if(g_dist(d,p*4,mr,mg,mb)<tol*1.3){vis[p]=1;M[p]=0;q[qt++]=p;}}
-  for(var x2=0;x2<w;x2++)seed(x2,0);
-  for(var y2=0;y2<h*.7;y2++){seed(0,y2);seed(w-1,y2);}
-  while(qh<qt){var p=q[qh++],px=p%w,py=(p/w)|0,pi=p*4,nb=[px>0?p-1:-1,px<w-1?p+1:-1,py>0?p-w:-1,py<h-1?p+w:-1];
-    for(var k=0;k<4;k++){var n=nb[k];if(n<0||vis[n])continue;var ni=n*4,dn=g_dist(d,ni,mr,mg,mb),dp=g_dist(d,ni,d[pi],d[pi+1],d[pi+2]);
-      if(dn<tol||(dp<tol*.12&&dn<tol*1.6)){vis[n]=1;M[n]=0;q[qt++]=n;}}}
-  /* keep the largest foreground piece */
-  var lab=new Int32Array(N),id=0,best=0,bestId=0;
-  for(var s=0;s<N;s++){if(M[s]!==255||lab[s])continue;id++;var h2=0,t2=0;q[t2++]=s;lab[s]=id;
-    while(h2<t2){var c=q[h2++],cx=c%w,cy=(c/w)|0,nn=[cx>0?c-1:-1,cx<w-1?c+1:-1,cy>0?c-w:-1,cy<h-1?c+w:-1];
-      for(var j=0;j<4;j++){var m=nn[j];if(m>=0&&M[m]===255&&!lab[m]){lab[m]=id;q[t2++]=m;}}}
-    if(t2>best){best=t2;bestId=id;}}
-  var cnt=0;for(var u=0;u<N;u++){if(M[u]===255&&lab[u]!==bestId)M[u]=0;if(M[u]===255)cnt++;}
-  if(cnt<N*.04||cnt>N*.985)return{M:new Uint8ClampedArray(N).fill(255),ok:false};
-  M=g_blur(g_blur(M,w,h),w,h);
-  for(var v=0;v<N;v++)M[v]=(M[v]-70)*255/185;
-  return{M:M,ok:true};
-}
-function g_stats(sd,M){
-  var d=sd.data,N=sd.width*sd.height,hist=new Uint32Array(256),n=0;
-  for(var i=0;i<N;i++){if(M[i]>128){var o=i*4;hist[(0.299*d[o]+0.587*d[o+1]+0.114*d[o+2])|0]++;n++;}}
-  if(n<50){for(var j=0;j<N;j++){var q=j*4;hist[(0.299*d[q]+0.587*d[q+1]+0.114*d[q+2])|0]++;}n=N;}
-  function pct(p){var t=n*p,a=0;for(var v=0;v<256;v++){a+=hist[v];if(a>=t)return v;}return 255;}
-  var lo=Math.min(pct(.01),25),hi=Math.max(pct(.99),200),span=Math.max(40,hi-lo),sum=0;
-  for(var v2=0;v2<256;v2++){sum+=Math.max(0,Math.min(255,(v2-lo)*255/span))*hist[v2];}
-  var m=Math.max(.02,Math.min(.98,sum/n/255)),gm=Math.max(.8,Math.min(1.25,Math.log(.5)/Math.log(m)));
-  return{lo:lo,hi:hi,gamma:gm};
-}
-function g_lut(){
-  var L=new Uint8ClampedArray(256),st=GE.stats;
-  for(var v=0;v<256;v++){var x=v;
-    if(GE.auto&&st){var y=Math.max(0,Math.min(255,(x-st.lo)*255/Math.max(40,st.hi-st.lo)));y=255*Math.pow(y/255,st.gamma);x=x*.4+y*.6;}
-    L[v]=(x-128)*GE.contrast+128+GE.bright;}
-  return L;
-}
-function g_ox(){return (GW-GE.sw*GE.base*GE.zoom)/2+GE.px;}
-function g_oy(){return (GH-GE.sh*GE.base*GE.zoom)/2+GE.py;}
-function g_render(){
-  var G=GE;if(!G)return;
-  var w=G.sw,h=G.sh,d=G.sd.data,od=G.out.data,M=G.M,L=g_lut(),sat=G.sat,N=w*h;
-  for(var i=0;i<N;i++){var o=i*4,r=L[d[o]],g=L[d[o+1]],b=L[d[o+2]];
-    if(sat!==1){var gr=0.299*r+0.587*g+0.114*b;r=gr+(r-gr)*sat;g=gr+(g-gr)*sat;b=gr+(b-gr)*sat;}
-    od[o]=r;od[o+1]=g;od[o+2]=b;od[o+3]=M[i];}
-  G.T.getContext("2d").putImageData(G.out,0,0);
-  var c=G.P.getContext("2d");c.fillStyle=G.bg;c.fillRect(0,0,GW,GH);
-  var s=G.base*G.zoom;c.imageSmoothingQuality="high";c.drawImage(G.T,g_ox(),g_oy(),w*s,h*s);
-}
-function g_draw(){if(!GE||GE.raf)return;GE.raf=requestAnimationFrame(function(){if(GE){GE.raf=0;g_render();}});}
-function g_remask(){
-  var G=GE,r;
-  if(G.removeBg){r=g_autoMask(G.sd,G.tol);G.M=r.M;G.note=r.ok?"":"Could not find a plain background. Use the Erase brush below, or change the strength.";}
-  else{G.M=new Uint8ClampedArray(G.sw*G.sh).fill(255);G.note="";}
-  G.stats=g_stats(G.sd,G.M);
-  if(G.ui.note)G.ui.note.textContent=G.note;
-}
-function g_fit(){
-  var G=GE,M=G.M,w=G.sw,h=G.sh,minx=w,maxx=-1,miny=h,maxy=-1,found=false;
-  if(G.removeBg){for(var y=0;y<h;y++){for(var x=0;x<w;x++){if(M[y*w+x]>128){if(x<minx)minx=x;if(x>maxx)maxx=x;if(y<miny)miny=y;found=true;}}}
-    for(var y2=h-1;y2>=0&&found;y2--){var any=false;for(var x2=0;x2<w;x2+=2){if(M[y2*w+x2]>128){any=true;break;}}if(any){maxy=y2;break;}}}
-  var okBox=found&&(maxx-minx)<w*.98;
-  var s,ox,oy;
-  if(okBox){var bwid=maxx-minx+1;s=Math.max(.9*GW/bwid,.91*GH/Math.max(1,h-miny));G.zoom=Math.max(.3,Math.min(4,s/G.base));s=G.base*G.zoom;ox=GW/2-((minx+maxx)/2)*s;oy=.09*GH-miny*s;}
-  else{G.zoom=1;s=G.base;ox=(GW-w*s)/2;oy=0;}
-  G.px=ox-(GW-w*s)/2;G.py=oy-(GH-h*s)/2;
-}
-function g_sync(){var G=GE;for(var k in G.ui){var u=G.ui[k];if(!u||u.type===undefined)continue;if(u.type==="checkbox")u.checked=!!G[k];else if(u.type==="range")u.value=G[k];}}
-function g_runAuto(){var G=GE;G.tol=40;G.auto=true;G.bright=0;G.contrast=1;G.sat=1;G.removeBg=true;g_remask();g_fit();g_sync();g_render();}
-function g_slider(parent,label,min,max,step,key,onchange){
-  var i=el("input");i.type="range";i.min=min;i.max=max;i.step=step;i.value=GE[key];
-  if(onchange==="release"){i.onchange=function(){GE[key]=parseFloat(i.value);g_remask();g_render();};}
-  else{i.oninput=function(){GE[key]=parseFloat(i.value);g_draw();};}
-  GE.ui[key]=i;parent.appendChild(g_lab(label,i));
-}
-function g_check(parent,label,key,fn){
-  var c=el("input");c.type="checkbox";c.checked=!!GE[key];c.onchange=function(){GE[key]=c.checked;if(fn)fn();else g_draw();};
-  var l=el("label","chk");l.appendChild(c);l.appendChild(document.createTextNode(label));parent.appendChild(l);GE.ui[key]=c;
-}
-function g_editor(opts,S,status){
-  var w=S.width,h=S.height,sd=S.getContext("2d").getImageData(0,0,w,h);
-  GE={S:S,sw:w,sh:h,sd:sd,out:new ImageData(w,h),T:document.createElement("canvas"),P:document.createElement("canvas"),M:null,
-      tol:40,removeBg:true,mode:"off",brush:28,bg:"#ffffff",zoom:1,px:0,py:0,auto:true,bright:0,contrast:1,sat:1,guide:true,
-      base:Math.max(GW/w,GH/h),stats:null,existing:opts.existing,raf:0,ui:{},note:""};
-  GE.T.width=w;GE.T.height=h;GE.P.width=GW;GE.P.height=GH;
-  status.textContent="";
-  var pv=el("div","pv");pv.appendChild(GE.P);var guide=el("div","guide");pv.appendChild(guide);gal.appendChild(pv);
-  GE.ui.guideEl=guide;
-  var note=el("div","st","");gal.appendChild(note);GE.ui.note=note;
-  gal.appendChild(g_btn("Auto: remove background, crop, fix lighting",null,function(){g_runAuto();}));
-  /* name */
-  var ni=el("input");ni.type="text";ni.value=opts.name;if(opts.existing)ni.disabled=true;GE.ui.nameInput=ni;
-  gal.appendChild(g_lab(opts.existing?"Name (folder)":"Name of the person (required, it is the folder name)",ni));
-  /* background removal */
-  gal.appendChild(el("h3",null,"Background"));
-  g_check(gal,"Remove the background","removeBg",function(){g_remask();g_render();});
-  g_slider(gal,"Strength (raise it if some background is left, lower it if the person is cut)",10,110,1,"tol","release");
-  var ms=el("select");[["off","Brush off"],["erase","Brush: erase background"],["restore","Brush: bring back the person"]].forEach(function(o){var op=el("option",null,o[1]);op.value=o[0];ms.appendChild(op);});
-  ms.onchange=function(){GE.mode=ms.value;GE.P.style.touchAction=ms.value==="off"?"auto":"none";};
-  gal.appendChild(g_lab("Touch-up brush (draw on the picture)",ms));
-  g_slider(gal,"Brush size",8,80,1,"brush");
-  var bs=el("select");[["#ffffff","White"],["#d6e6f5","Light blue"],["#e4e4e4","Light grey"],["custom","Other colour"]].forEach(function(o){var op=el("option",null,o[1]);op.value=o[0];bs.appendChild(op);});
-  var bc=el("input");bc.type="color";bc.value="#ffffff";
-  bs.onchange=function(){if(bs.value!=="custom"){GE.bg=bs.value;bc.value=bs.value;}g_draw();};
-  bc.oninput=function(){GE.bg=bc.value;bs.value="custom";g_draw();};
-  gal.appendChild(g_lab("Background colour",bs));gal.appendChild(bc);
-  /* crop */
-  gal.appendChild(el("h3",null,"Crop (passport style)"));
-  g_slider(gal,"Zoom",.3,4,.01,"zoom");
-  g_slider(gal,"Move left or right",-GW*1.5,GW*1.5,1,"px");
-  g_slider(gal,"Move up or down",-GH*1.5,GH*1.5,1,"py");
-  g_check(gal,"Show the head guide (not saved)","guide",function(){guide.style.display=GE.guide?"block":"none";});
-  gal.appendChild(g_btn("Auto crop","sec",function(){g_fit();g_sync();g_render();}));
-  /* lighting */
-  gal.appendChild(el("h3",null,"Lighting"));
-  g_check(gal,"Auto lighting","auto");
-  g_slider(gal,"Brightness",-60,60,1,"bright");
-  g_slider(gal,"Contrast",.6,1.6,.01,"contrast");
-  g_slider(gal,"Colour strength",0,2,.01,"sat");
-  /* save */
-  var msg=el("div","st","");gal.appendChild(msg);GE.ui.msg=msg;
-  gal.appendChild(g_btn("Save to gallery",null,function(){g_save(false);}));
-  gal.appendChild(g_btn("Save and use on banner",null,function(){g_save(true);}));
-  gal.appendChild(g_btn("Cancel","sec",function(){g_home();}));
-  /* brush drawing */
-  var drawing=false;
-  function paint(ev){
-    var r=GE.P.getBoundingClientRect(),kx=GW/r.width,ky=GH/r.height,s=GE.base*GE.zoom;
-    var sx=((ev.clientX-r.left)*kx-g_ox())/s,sy=((ev.clientY-r.top)*ky-g_oy())/s,rad=GE.brush*kx/2/s,val=GE.mode==="erase"?0:255,W=GE.sw,H=GE.sh,M=GE.M;
-    for(var y=Math.max(0,Math.floor(sy-rad));y<=Math.min(H-1,Math.ceil(sy+rad));y++){for(var x=Math.max(0,Math.floor(sx-rad));x<=Math.min(W-1,Math.ceil(sx+rad));x++){var dx=x-sx,dy=y-sy;if(dx*dx+dy*dy<=rad*rad)M[y*W+x]=val;}}
-    g_draw();
-  }
-  GE.P.onpointerdown=function(ev){if(GE.mode==="off")return;drawing=true;try{GE.P.setPointerCapture(ev.pointerId);}catch(e){}paint(ev);ev.preventDefault();};
-  GE.P.onpointermove=function(ev){if(drawing&&GE.mode!=="off")paint(ev);};
-  GE.P.onpointerup=function(){drawing=false;};GE.P.onpointercancel=function(){drawing=false;};
-  g_runAuto();
-}
-async function g_save(useAfter){
-  var G=GE,msg=G.ui.msg;
-  try{
-    msg.textContent="Saving...";
-    var name=G.ui.nameInput.value.trim(),folder,file;
-    if(!name&&!G.existing){msg.textContent="Type the name of the person first (the Name box under the picture).";return;}
-    if(G.existing){folder=G.existing.folder;file=G.existing.file;}
-    else{folder=g_slug(name);var taken={},r=await g_call("GET","photos/"+folder);
-      if(r.ok){(await r.json()).forEach(function(f){taken[f.name]=1;});}
-      file=folder+".jpg";var n=2;while(taken[file]){file=folder+"-"+n+".jpg";n++;}}
-    G.P.getContext("2d");
-    var passport=G.P.toDataURL("image/jpeg",.9),orig=G.S.toDataURL("image/jpeg",.85),base="photos/"+folder+"/";
-    await g_put(base+file,passport,"Add photo "+folder);
-    await g_put(base+"original-"+file,orig,"Add original of "+folder);
-    THUMB[base+file]=passport;
-    if(useAfter)g_use(base+file,folder,passport);else g_home("Saved in the folder "+folder+".");
-  }catch(e){var cd=(String(e.message).match(/\d{3}/)||[])[0];msg.textContent="Could not save. "+(cd?g_why(+cd):"Check your internet.");}
+  im.src=URL.createObjectURL(file);
 }
 
 function rebuildPanel(){if(panel){panel.remove();panel=null;}buildPanel();try{panel.scrollIntoView();}catch(e){}}
@@ -617,11 +401,13 @@ function buildPanel(){
   field(panel,"Ticker speed (pixels per second)","number",function(){return C.anim.tickerSpeed;},function(v){C.anim.tickerSpeed=v;},{min:20,max:400,step:10});
   field(panel,"TV style: small tag at top right (empty = hide)","text",function(){return C.tag||"";},function(v){C.tag=v;});
   field(panel,"TV style: show clock","checkbox",function(){return !!C.clock;},function(v){C.clock=v;});
+  panel.appendChild(el("h4",null,"Font"));
+  field(panel,"Font for the whole banner (needs internet)","select",function(){return C.font||"";},function(v){C.font=v;},[["","Arial (default)"]].concat(FONTS.map(function(f){return [f[0],f[0]];})));
   C.photo=C.photo||{src:""};
   panel.appendChild(el("h4",null,"Speaker photos"));
   var gb=el("button",null,"Open speaker photo gallery");gb.onclick=g_open;panel.appendChild(gb);
   var rb=el("button","sec","Remove picture from banner");rb.onclick=function(){C.photo={src:""};renderBanner();};panel.appendChild(rb);
-  panel.appendChild(el("div","hint","Photos are saved in folders in your GitHub repo, so each person is added only once. Person style: line 1 = name, line 2 = title or role, line 3 = bottom line."));
+  panel.appendChild(el("div","hint","Photos are saved in folders on this phone. Open the gallery to pick a saved photo or upload a new one. Person style: line 1 = name, line 2 = title or role, line 3 = bottom line."));
   panel.appendChild(el("div","hint","Ticker style joins the messages of all three lines into one moving line."));
   var h;
   h=el("h4",null,"Line 1 (top)");panel.appendChild(h);
@@ -675,30 +461,14 @@ function buildPanel(){
     var b=el("button",null,"Save banner");b.onclick=save;panel.appendChild(b);panel.appendChild(m);
     panel.appendChild(el("div","hint","Changes show here at once. Press Save so the stream (Prism) shows them too."));
   }else{
-    var tl=el("label",null,"GitHub token (one time, stays on this phone only)"),ti=el("input");ti.type="text";ti.placeholder="github_pat_...";
-    try{ti.value=localStorage.getItem("ghtok")||"";}catch(e){}
-    ti.onchange=function(){try{localStorage.setItem("ghtok",ti.value.trim());}catch(e){}};
-    tl.appendChild(ti);panel.appendChild(tl);
-    var b2=el("button",null,"Save online");
-    b2.onclick=async function(){
-      var gi=ghInfo();
-      if(!gi){m.textContent="Open this page from your GitHub Pages link (name.github.io/...) to save.";return;}
-      var tok=ti.value.trim();if(!tok){m.textContent="Paste your GitHub token first.";return;}
-      try{localStorage.setItem("ghtok",tok);}catch(e){}
-      m.textContent="Saving...";
-      var api="https://api.github.com/repos/"+gi.owner+"/"+gi.repo+"/contents/config.json";
-      var H={Authorization:"Bearer "+tok,Accept:"application/vnd.github+json"};
-      try{
-        var g=await fetch(api,{headers:H,cache:"no-store"}),sha;
-        if(g.ok){sha=(await g.json()).sha;}
-        var body={message:"Update banner",content:btoa(unescape(encodeURIComponent(JSON.stringify(ALL))))};
-        if(sha)body.sha=sha;
-        var p=await fetch(api,{method:"PUT",headers:Object.assign({"Content-Type":"application/json"},H),body:JSON.stringify(body)});
-        m.textContent=p.ok?"Saved online. The stream shows it within about 2 minutes.":"Could not save (error "+p.status+"). Check the token.";
-      }catch(e){m.textContent="Could not save. Check your internet.";}
+    var b2=el("button",null,"Download settings file");
+    b2.onclick=function(){
+      var blob=new Blob([JSON.stringify(ALL)],{type:"application/json"}),a=document.createElement("a");
+      a.href=URL.createObjectURL(blob);a.download="config.json";document.body.appendChild(a);a.click();a.remove();
+      m.textContent="Downloaded config.json.";
     };
     panel.appendChild(b2);panel.appendChild(m);
-    panel.appendChild(el("div","hint","Press Save online. The Prism link stays the same and updates by itself."));
+    panel.appendChild(el("div","hint","To make the stream (Prism) show your changes, upload this config.json to your GitHub repo, replacing the old one."));
   }
   app.appendChild(panel);
 }
