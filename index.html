@@ -158,13 +158,38 @@ function ghInfo(){var ov="";try{ov=localStorage.getItem("ghrepo")||"";}catch(e){
   if(/^[\w.-]+\/[\w.-]+$/.test(ov)){var pp=ov.split("/");return {owner:pp[0],repo:pp[1]};}
   var h=location.hostname;if(!/\.github\.io$/.test(h))return null;var owner=h.split(".")[0];
   var seg=location.pathname.split("/").filter(Boolean)[0];if(!seg||/\.html?$/.test(seg))seg=owner+".github.io";return {owner:owner,repo:seg};}
+var statEl=null;
+function showStat(t){
+  if(LIVE||IN_CLAUDE||EDIT)return;
+  if(!statEl){statEl=el("div","hint","");statEl.style.cssText="text-align:center;margin:8px;font-size:12px;opacity:.7";app.appendChild(statEl);}
+  statEl.textContent=t;
+}
+async function fetchCfg(){
+  var gi=ghInfo(),tok="",why="";try{tok=localStorage.getItem("ghtok")||"";}catch(e){}
+  var bust="?t="+Date.now();
+  if(gi){
+    var url="https://api.github.com/repos/"+gi.owner+"/"+gi.repo+"/contents/config.json"+bust;
+    for(var tryTok=tok?1:0;tryTok>=0;tryTok--){
+      var h={Accept:"application/vnd.github.raw+json"};if(tryTok)h.Authorization="Bearer "+tok;
+      try{var r=await fetch(url,{headers:h,cache:"no-store"});
+        if(r.ok)return {t:await r.text(),why:""};
+        why="GitHub error "+r.status;}catch(e){why="no internet to GitHub";}
+    }
+  }
+  try{var r2=await fetch("config.json"+bust,{cache:"no-store"});
+    if(r2.ok)return {t:await r2.text(),why:""};
+    why=(why?why+", then ":"")+"config.json error "+r2.status;}catch(e){}
+  return {t:null,why:why||"could not load"};
+}
 async function loadRemote(){
-  try{var gi=ghInfo(),r;
-    if(gi){r=await fetch("https://api.github.com/repos/"+gi.owner+"/"+gi.repo+"/contents/config.json",{headers:{Accept:"application/vnd.github.raw+json"},cache:"no-store"});}
-    else{r=await fetch("config.json?t="+Date.now(),{cache:"no-store"});}
-    if(!r.ok)return;var t=await r.text();if(t===lastRemote)return;
-    var o=JSON.parse(t);lastRemote=t;applyRemote(o);renderBanner();
-  }catch(e){}
+  try{
+    var res=await fetchCfg();
+    if(res.t===null){showStat("Could not load the saved banner ("+res.why+"). Showing the version built into the page.");return;}
+    var o=JSON.parse(res.t);
+    showStat("Showing the latest saved banner. Checked at "+new Date().toLocaleTimeString()+".");
+    if(res.t===lastRemote)return;
+    lastRemote=res.t;applyRemote(o);renderBanner();
+  }catch(e){showStat("The saved banner could not be read ("+(e&&e.message?e.message:"error")+").");}
 }
 
 function ord(n){var j=n%10,k=n%100;if(j==1&&k!=11)return n+"ST";if(j==2&&k!=12)return n+"ND";if(j==3&&k!=13)return n+"RD";return n+"TH";}
@@ -528,7 +553,7 @@ function buildPanel(){
         var body={message:"Update banner",content:btoa(bin)};
         if(sha)body.sha=sha;
         var pr=await fetch(api,{method:"PUT",headers:Object.assign({"Content-Type":"application/json"},H),body:JSON.stringify(body)});
-        if(pr.ok){m.textContent="Saved. The live stream will change by itself within about 2 minutes.";}
+        if(pr.ok){m.textContent="Saved. The live stream will change by itself within about a minute.";}
         else if(pr.status===401){m.textContent="The token was not accepted. It is wrong or has expired. Make a new token with Contents: Read and write.";}
         else if(pr.status===403){m.textContent="The token cannot write to this repo. It needs Contents: Read and write.";}
         else if(pr.status===404){m.textContent="Repo not found, or the token does not include this repo.";}
@@ -577,7 +602,7 @@ function armTaps(){
   document.addEventListener("click",function(){var now=Date.now();if(now-t0>3000)n=0;t0=now;n++;if(n>=5)enterEdit();});
 }
 if(IN_CLAUDE){try{claude.use("artifact").then(function(a){ART=a;if(a)buildPanel();}).catch(function(){});}catch(e){}}
-else if(!USEQ){loadRemote().then(function(){if(EDIT)buildPanel();else{pollId=setInterval(loadRemote,120000);armTaps();if(!LIVE)showEditBtn();}});}
+else if(!USEQ){loadRemote().then(function(){if(EDIT)buildPanel();else{pollId=setInterval(loadRemote,60000);armTaps();if(!LIVE)showEditBtn();}});}
 })();
 </script>
 </body>
