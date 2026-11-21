@@ -546,17 +546,26 @@ function buildPanel(){
       var api="https://api.github.com/repos/"+gi.owner+"/"+gi.repo+"/contents/config.json";
       var H={Authorization:"Bearer "+tok,Accept:"application/vnd.github+json"};
       try{
-        var g=await fetch(api,{headers:H,cache:"no-store"}),sha;
-        if(g.ok){sha=(await g.json()).sha;}
-        var bytes=new TextEncoder().encode(JSON.stringify(ALL)),bin="";
+        var text=JSON.stringify(ALL),bytes=new TextEncoder().encode(text),bin="";
         for(var i=0;i<bytes.length;i+=8192){bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+8192));}
-        var body={message:"Update banner",content:btoa(bin)};
-        if(sha)body.sha=sha;
-        var pr=await fetch(api,{method:"PUT",headers:Object.assign({"Content-Type":"application/json"},H),body:JSON.stringify(body)});
-        if(pr.ok){m.textContent="Saved. The live stream will change by itself within about a minute.";}
+        var content=btoa(bin),pr=null;
+        for(var attempt=0;attempt<2;attempt++){
+          var sha,g=await fetch(api+"?t="+Date.now(),{headers:H,cache:"no-store"});
+          if(g.ok){sha=(await g.json()).sha;}
+          var body={message:"Update banner",content:content};
+          if(sha)body.sha=sha;
+          pr=await fetch(api,{method:"PUT",headers:Object.assign({"Content-Type":"application/json"},H),body:JSON.stringify(body)});
+          if(pr.status!==409&&pr.status!==422)break;
+        }
+        if(pr.ok){
+          var ok2=false;
+          try{var vr=await fetch(api+"?t="+Date.now(),{headers:{Authorization:"Bearer "+tok,Accept:"application/vnd.github.raw+json"},cache:"no-store"});
+            ok2=vr.ok&&(await vr.text())===text;}catch(e){}
+          m.textContent=ok2?"Saved and confirmed on GitHub ("+gi.owner+"/"+gi.repo+"). The live stream will change by itself within about a minute.":"Saved to GitHub ("+gi.owner+"/"+gi.repo+"), but I could not confirm it yet. The live stream will change within about a minute.";
+        }
         else if(pr.status===401){m.textContent="The token was not accepted. It is wrong or has expired. Make a new token with Contents: Read and write.";}
         else if(pr.status===403){m.textContent="The token cannot write to this repo. It needs Contents: Read and write.";}
-        else if(pr.status===404){m.textContent="Repo not found, or the token does not include this repo.";}
+        else if(pr.status===404){m.textContent="Repo "+gi.owner+"/"+gi.repo+" not found, or the token does not include this repo.";}
         else{m.textContent="Could not save (error "+pr.status+").";}
       }catch(e){m.textContent="Could not save. Check your internet.";}
     };
