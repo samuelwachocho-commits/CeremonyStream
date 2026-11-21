@@ -154,7 +154,9 @@ function applyRemote(o){
   else mix(ALL.banners["1"],o);
   if(!panel){curId=ALL.live;C=ALL.banners[curId];}
 }
-function ghInfo(){var h=location.hostname;if(!/\.github\.io$/.test(h))return null;var owner=h.split(".")[0];
+function ghInfo(){var ov="";try{ov=localStorage.getItem("ghrepo")||"";}catch(e){}
+  if(/^[\w.-]+\/[\w.-]+$/.test(ov)){var pp=ov.split("/");return {owner:pp[0],repo:pp[1]};}
+  var h=location.hostname;if(!/\.github\.io$/.test(h))return null;var owner=h.split(".")[0];
   var seg=location.pathname.split("/").filter(Boolean)[0];if(!seg||/\.html?$/.test(seg))seg=owner+".github.io";return {owner:owner,repo:seg};}
 async function loadRemote(){
   try{var gi=ghInfo(),r;
@@ -332,6 +334,30 @@ async function g_put(path,dataUrl,msg){
 async function g_del(path){var g=await g_call("GET",path);if(!g.ok)return;var j=await g.json();var r=await g_call("DELETE",path,{message:"Delete photo",sha:j.sha});if(!r.ok)throw new Error("delete "+r.status);}
 function g_btn(t,cls,fn){var b=el("button",cls||null,t);b.onclick=fn;return b;}
 function g_lab(t,input,cls){var l=el("label",cls||null,t);l.appendChild(input);return l;}
+function g_why(s){return s===401?"The token was not accepted. It may be wrong or expired.":s===403?"The token cannot write to this repo. It needs Contents: Read and write.":s===404?"Repo or access not found. Check the repo name, and that the token includes this repo.":"GitHub said error "+s+".";}
+function g_conn(){
+  var box=el("div");box.appendChild(el("h3",null,"Connection to GitHub"));
+  var gi=ghInfo(),ri=el("input");ri.type="text";ri.placeholder="yourname/reponame";ri.value=gi?gi.owner+"/"+gi.repo:"";
+  var ti=el("input");ti.type="text";ti.placeholder="github_pat_...";try{ti.value=localStorage.getItem("ghtok")||"";}catch(e){}
+  var st=el("div","st",g_auth()?"Saved on this phone.":"Not connected yet.");
+  box.appendChild(g_lab("Repo (yourname/reponame)",ri));
+  box.appendChild(g_lab("GitHub token",ti));
+  box.appendChild(g_btn("Save and test connection",null,function(){g_test(ri.value.trim(),ti.value.trim(),st);}));
+  box.appendChild(st);return box;
+}
+async function g_test(repo,tok,st){
+  if(!/^[\w.-]+\/[\w.-]+$/.test(repo)){st.textContent="Type the repo like this: yourname/reponame";return;}
+  if(!tok){st.textContent="Paste your token first.";return;}
+  try{localStorage.setItem("ghrepo",repo);localStorage.setItem("ghtok",tok);}catch(e){}
+  st.textContent="Testing...";
+  try{
+    var r=await g_call("GET","photos/.keep"),body={message:"Connection test",content:btoa("ok")};
+    if(r.ok){body.sha=(await r.json()).sha;}
+    var w=await g_call("PUT","photos/.keep",body);
+    if(w.ok){g_home("Connected. You can add photos now.");return;}
+    st.textContent=g_why(w.status);
+  }catch(e){st.textContent="Could not reach GitHub. Check your internet.";}
+}
 function g_open(){if(gal)return;gal=el("div","gal");document.body.appendChild(gal);g_home();}
 function g_close(){if(gal){gal.remove();gal=null;}GE=null;}
 function g_thumb(path,im){
@@ -342,15 +368,14 @@ function g_home(msg){
   gal.innerHTML="";GE=null;
   gal.appendChild(el("h2",null,"Speaker photos"));
   gal.appendChild(g_btn("Close","sec",g_close));
-  if(!g_auth()){gal.appendChild(el("div","st","To use the gallery, open this page from your github.io link, paste your GitHub token in the editor box, then open the gallery again."));return;}
+  gal.appendChild(g_conn());
+  if(!g_auth()){gal.appendChild(el("div","st","Fill in the repo and the token above, then press Save and test connection."));return;}
   var add=el("div");add.appendChild(el("h3",null,"Add a new photo"));
   var ni=el("input");ni.type="text";ni.placeholder="For example: Samuel";
-  add.appendChild(g_lab("Name (the photo is saved in a folder with this name)",ni));
+  add.appendChild(g_lab("Name (you can also type it on the next screen)",ni));
   var st=el("div","st",msg||"");
   var fi=el("input");fi.type="file";fi.accept="image/*";
-  fi.onchange=function(){var f=fi.files&&fi.files[0];if(!f)return;var nm=ni.value.trim();
-    if(!nm){st.textContent="Type the name first, then pick the picture.";fi.value="";return;}
-    g_edit({name:nm,src:URL.createObjectURL(f),existing:null});};
+  fi.onchange=function(){var f=fi.files&&fi.files[0];if(!f)return;g_edit({name:ni.value.trim(),src:URL.createObjectURL(f),existing:null});};
   add.appendChild(g_lab("Picture (from your gallery or camera)",fi));
   add.appendChild(st);gal.appendChild(add);
   gal.appendChild(el("h3",null,"Saved photos"));
@@ -369,7 +394,7 @@ function g_home(msg){
         card.appendChild(g_btn("Delete","bad",function(){g_delFile(fo.folder,f);}));
         grid.appendChild(card);});
       box.appendChild(grid);});
-  }).catch(function(e){box.textContent="Could not load the gallery ("+e.message+"). Check the token.";});
+  }).catch(function(e){var cd=(String(e.message).match(/\d{3}/)||[])[0];box.textContent="Could not load the gallery. "+(cd?g_why(+cd):"Check your internet.");});
 }
 function g_use(path,folder,u){
   C.photo={src:u,path:path,name:folder};
@@ -510,7 +535,7 @@ function g_editor(opts,S,status){
   gal.appendChild(g_btn("Auto: remove background, crop, fix lighting",null,function(){g_runAuto();}));
   /* name */
   var ni=el("input");ni.type="text";ni.value=opts.name;if(opts.existing)ni.disabled=true;GE.ui.nameInput=ni;
-  gal.appendChild(g_lab(opts.existing?"Name (folder)":"Name (folder it is saved in)",ni));
+  gal.appendChild(g_lab(opts.existing?"Name (folder)":"Name of the person (required, it is the folder name)",ni));
   /* background removal */
   gal.appendChild(el("h3",null,"Background"));
   g_check(gal,"Remove the background","removeBg",function(){g_remask();g_render();});
@@ -559,7 +584,8 @@ async function g_save(useAfter){
   var G=GE,msg=G.ui.msg;
   try{
     msg.textContent="Saving...";
-    var name=G.ui.nameInput.value.trim()||"speaker",folder,file;
+    var name=G.ui.nameInput.value.trim(),folder,file;
+    if(!name&&!G.existing){msg.textContent="Type the name of the person first (the Name box under the picture).";return;}
     if(G.existing){folder=G.existing.folder;file=G.existing.file;}
     else{folder=g_slug(name);var taken={},r=await g_call("GET","photos/"+folder);
       if(r.ok){(await r.json()).forEach(function(f){taken[f.name]=1;});}
@@ -570,7 +596,7 @@ async function g_save(useAfter){
     await g_put(base+"original-"+file,orig,"Add original of "+folder);
     THUMB[base+file]=passport;
     if(useAfter)g_use(base+file,folder,passport);else g_home("Saved in the folder "+folder+".");
-  }catch(e){msg.textContent="Could not save ("+e.message+"). Check the token and your internet.";}
+  }catch(e){var cd=(String(e.message).match(/\d{3}/)||[])[0];msg.textContent="Could not save. "+(cd?g_why(+cd):"Check your internet.");}
 }
 
 function rebuildPanel(){if(panel){panel.remove();panel=null;}buildPanel();try{panel.scrollIntoView();}catch(e){}}
