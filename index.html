@@ -347,7 +347,9 @@ function g_conn(){
 }
 async function g_test(repo,tok,st){
   if(!/^[\w.-]+\/[\w.-]+$/.test(repo)){st.textContent="Type the repo like this: yourname/reponame";return;}
+  tok=tok.replace(/\s+/g,"").replace(/^["']|["']$/g,"");
   if(!tok){st.textContent="Paste your token first.";return;}
+  if(!/^(github_pat_|ghp_)/.test(tok)){st.textContent="That does not look like a GitHub token. It should be one long piece starting with github_pat_ or ghp_. You pasted "+tok.length+" characters.";return;}
   try{localStorage.setItem("ghrepo",repo);localStorage.setItem("ghtok",tok);}catch(e){}
   st.textContent="Testing...";
   try{
@@ -355,7 +357,7 @@ async function g_test(repo,tok,st){
     if(r.ok){body.sha=(await r.json()).sha;}
     var w=await g_call("PUT","photos/.keep",body);
     if(w.ok){g_home("Connected. You can add photos now.");return;}
-    st.textContent=g_why(w.status);
+    st.textContent=g_why(w.status)+(w.status===401?" You pasted "+tok.length+" characters. A full token is about 93 (github_pat_...) or 40 (ghp_...).":"");
   }catch(e){st.textContent="Could not reach GitHub. Check your internet.";}
 }
 function g_open(){if(gal)return;gal=el("div","gal");document.body.appendChild(gal);g_home();}
