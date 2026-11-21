@@ -186,7 +186,7 @@ function ensureFont(name){
 function el(t,c,x){var e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;}
 
 var FX={drop:["translateY(-100%)","translateY(100%)"],rotate:["rotate(-14deg) scale(.4)","rotate(14deg) scale(1.5)"],skew:["skewX(45deg) translateX(100%)","skewX(-45deg) translateX(-100%)"],wave:["none","none"],up:["translateY(100%)","translateY(-100%)"],fade:["none","none"],zoom:["scale(.6)","scale(1.4)"],flip:["rotateX(90deg)","rotateX(-90deg)"],blur:["none","none","inset(0)","inset(0)","blur(10px)","blur(10px)"],wipe:["none","none","inset(0 100% 0 0)","inset(0 0 0 100%)"],letters:["none","none"],side:["translateX(100%)","translateX(-100%)"]};
-var banner,gen=0;
+var banner,gen=0,phTimer=null;
 
 function msgs(txt,date){return String(txt||"").split("\n").map(function(x){return x.trim();}).filter(Boolean).map(function(x){return x.replace(/\{DATE\}/g,date);});}
 function mkLine(cls,list,h,fs,fg,bg){
@@ -208,7 +208,7 @@ function mkTicker(date,g1,H,FS){
 }
 function renderBanner(){
   if(banner)banner.remove();
-  clearInterval(timer);clearInterval(clk);gen++;var myGen=gen;
+  clearInterval(timer);clearInterval(clk);clearInterval(phTimer);gen++;var myGen=gen;
   banner=el("div","banner lay-"+(C.layout||"bars")+(C.anim.banner&&C.anim.banner!=="none"?" fx-"+C.anim.banner:"")+(C.anim.fx==="wave"?" wavefx":""));banner.style.setProperty("--bs",(C.anim.bsecs||3)+"s");banner.style.setProperty("--bars",(C.anim.barsecs||3)+"s");
   var s=banner.style, f=FX[C.anim.fx]||FX.up;s.fontFamily=C.font?"'"+C.font+"',Arial,Helvetica,sans-serif":"";ensureFont(C.font);
   s.setProperty("--enter",f[0]);s.setProperty("--leave",f[1]);s.setProperty("--cin",f[2]||"inset(0)");s.setProperty("--cout",f[3]||"inset(0)");s.setProperty("--fin",f[4]||"none");s.setProperty("--fout",f[5]||"none");s.setProperty("--shine",C.anim.shineSecs+"s");
@@ -235,7 +235,10 @@ function renderBanner(){
     if(C.tag){grid.appendChild(el("div","tvtag",C.tag));}
     if(isP){
       var ph=el("div","tvphoto");ph.style.height="calc("+sumH+" + clamp(14px,3vw,36px))";
-      if(C.photo&&C.photo.src){var pim=el("img");pim.alt="photo";pim.src=C.photo.src;ph.appendChild(pim);}
+      var plist=(C.photo&&C.photo.list&&C.photo.list.length)?C.photo.list:((C.photo&&C.photo.src)?[C.photo.src]:[]);
+      if(plist.length){var pim=el("img");pim.alt="photo";pim.src=plist[0];ph.appendChild(pim);
+        if(plist.length>1){var pi=0;pim.style.transition="opacity .5s";
+          phTimer=setInterval(function(){pim.style.opacity=0;setTimeout(function(){pi=(pi+1)%plist.length;pim.src=plist[pi];pim.style.opacity=1;},500);},Math.max(3,C.photo.secs||30)*1000);}}
       else{ph.appendChild(el("div","ph0","Add photo in the editor"));}
       grid.appendChild(ph);}
     if(lgEl){lgEl.classList.add(isP?"tvlogo2":"tvlogo");grid.appendChild(lgEl);
@@ -328,61 +331,98 @@ function g_btn(t,cls,fn){var b=el("button",cls||null,t);b.onclick=fn;return b;}
 function g_lab(t,input,cls){var l=el("label",cls||null,t);l.appendChild(input);return l;}
 function g_open(){if(gal)return;gal=el("div","gal");document.body.appendChild(gal);g_home();}
 function g_close(){if(gal){gal.remove();gal=null;}}
-function g_use(name,u){
-  C.photo={src:u,name:name};
+function g_useMany(name,list,secs){
+  C.photo={src:list[0]||"",list:list,secs:secs||30,name:name};
   if(C.layout!=="person"&&confirm("Switch the banner style to Person so the photo shows?")){C.layout="person";g_preset("person");}
   renderBanner();if(panel)rebuildPanel();g_close();
+}
+function g_proc(file){
+  return new Promise(function(res,rej){
+    var im=new Image();
+    im.onerror=function(){rej(new Error("open"));};
+    im.onload=function(){
+      var cv=document.createElement("canvas");cv.width=GW;cv.height=GH;
+      var c=cv.getContext("2d");c.fillStyle="#ffffff";c.fillRect(0,0,GW,GH);
+      var sc=Math.max(GW/im.width,GH/im.height),w=im.width*sc,h=im.height*sc;
+      c.imageSmoothingQuality="high";
+      c.drawImage(im,(GW-w)/2,Math.min(0,(GH-h)*0.15),w,h);
+      res(cv.toDataURL("image/jpeg",.85));URL.revokeObjectURL(im.src);
+    };
+    im.src=URL.createObjectURL(file);
+  });
 }
 function g_home(msg){
   gal.innerHTML="";
   gal.appendChild(el("h2",null,"Speaker photos"));
   gal.appendChild(g_btn("Close","sec",g_close));
-  var add=el("div");add.appendChild(el("h3",null,"Upload a new photo"));
-  var ni=el("input");ni.type="text";ni.placeholder="For example: Samuel";
-  add.appendChild(g_lab("Name of the person (this is the folder name)",ni));
+  gal.appendChild(el("h3",null,"New folder"));
+  var ni=el("input");ni.type="text";ni.placeholder="For example: Pastor Samuel";
+  gal.appendChild(g_lab("Name of the person or folder",ni));
   var st=el("div","st",msg||"");
-  var fi=el("input");fi.type="file";fi.accept="image/*";
-  fi.onchange=function(){var f=fi.files&&fi.files[0];if(!f)return;g_upload(ni.value.trim(),f,st);fi.value="";};
-  add.appendChild(g_lab("Choose a picture (gallery or camera)",fi));
-  add.appendChild(st);gal.appendChild(add);
-  gal.appendChild(el("h3",null,"Select a saved photo"));
-  var all=p_load(),keys=Object.keys(all);
-  if(!keys.length){gal.appendChild(el("div","st","No photos yet. Upload the first one above."));return;}
+  gal.appendChild(g_btn("Create folder and open it",null,function(){
+    var n=ni.value.trim();if(!n){st.textContent="Type a name first.";return;}
+    var all=p_load(),k=g_slug(n);
+    if(!all[k]){all[k]={name:n,photos:[]};if(!p_store(all)){st.textContent="Could not save. The phone storage for this page is full.";return;}}
+    g_folder(k);}));
+  gal.appendChild(st);
+  gal.appendChild(el("h3",null,"Your folders"));
+  var all2=p_load(),keys=Object.keys(all2);
+  if(!keys.length){gal.appendChild(el("div","st","No folders yet. Create the first one above."));return;}
+  var grid=el("div","grid");
   keys.forEach(function(k){
-    var fo=all[k];
-    gal.appendChild(el("h3",null,fo.name));
-    gal.appendChild(g_btn("Delete folder","bad",function(){
-      if(!confirm("Delete the whole folder "+fo.name+" and all its photos?"))return;
-      delete all[k];p_store(all);g_home("Folder deleted.");}));
-    var grid=el("div","grid");
-    fo.photos.forEach(function(u,idx){
-      var card=el("div","card"),im=el("img");im.alt=fo.name;im.src=u;card.appendChild(im);
-      card.appendChild(g_btn("Use",null,function(){g_use(fo.name,u);}));
-      card.appendChild(g_btn("Delete","bad",function(){
-        if(!confirm("Delete this photo?"))return;
-        fo.photos.splice(idx,1);if(!fo.photos.length)delete all[k];p_store(all);g_home("Photo deleted.");}));
-      grid.appendChild(card);});
-    gal.appendChild(grid);});
+    var fo=all2[k],card=el("div","card");
+    if(fo.photos.length){var im=el("img");im.alt=fo.name;im.src=fo.photos[0];card.appendChild(im);}
+    else{card.appendChild(el("div","ph0","Empty folder"));}
+    card.appendChild(el("div","st",fo.name+" ("+fo.photos.length+")"));
+    card.appendChild(g_btn("Open",null,function(){g_folder(k);}));
+    card.appendChild(g_btn("Delete","bad",function(){
+      if(!confirm("Delete the folder "+fo.name+" and all its photos?"))return;
+      var a2=p_load();delete a2[k];p_store(a2);g_home("Folder deleted.");}));
+    grid.appendChild(card);});
+  gal.appendChild(grid);
 }
-/* upload: centre-crop to 4:5, no editing, save in the person's folder */
-function g_upload(name,file,st){
-  if(!name){st.textContent="Type the name of the person first.";return;}
-  st.textContent="Saving...";
-  var im=new Image();
-  im.onerror=function(){st.textContent="Could not open this picture.";};
-  im.onload=function(){
-    var cv=document.createElement("canvas");cv.width=GW;cv.height=GH;
-    var c=cv.getContext("2d");c.fillStyle="#ffffff";c.fillRect(0,0,GW,GH);
-    var sc=Math.max(GW/im.width,GH/im.height),w=im.width*sc,h=im.height*sc;
-    c.imageSmoothingQuality="high";
-    c.drawImage(im,(GW-w)/2,Math.min(0,(GH-h)*0.15),w,h);
-    var data=cv.toDataURL("image/jpeg",.85),all=p_load(),k=g_slug(name);
-    if(!all[k])all[k]={name:name,photos:[]};
-    all[k].photos.push(data);
-    if(!p_store(all)){st.textContent="Could not save: the phone storage for this page is full. Delete some photos.";return;}
-    g_home("Saved in the folder "+all[k].name+".");
+function g_folder(k,msg){
+  var all=p_load(),fo=all[k];if(!fo){g_home();return;}
+  gal.innerHTML="";
+  gal.appendChild(el("h2",null,"Folder: "+fo.name));
+  gal.appendChild(g_btn("Back to folders","sec",function(){g_home();}));
+  gal.appendChild(g_btn("Close","sec",g_close));
+  var st=el("div","st",msg||"");
+  var fi=el("input");fi.type="file";fi.accept="image/*";fi.multiple=true;
+  fi.onchange=async function(){
+    var files=Array.prototype.slice.call(fi.files||[]);if(!files.length)return;
+    var done=0,fail=0;
+    for(var i=0;i<files.length;i++){
+      st.textContent="Saving photo "+(i+1)+" of "+files.length+"...";
+      try{var d=await g_proc(files[i]);fo.photos.push(d);done++;}catch(e){fail++;}
+    }
+    all[k]=fo;
+    if(!p_store(all)){g_folder(k,"Could not save: the phone storage for this page is full. Delete some photos.");return;}
+    g_folder(k,"Added "+done+" photo"+(done===1?"":"s")+" to this folder."+(fail?" "+fail+" could not be opened.":""));
   };
-  im.src=URL.createObjectURL(file);
+  gal.appendChild(g_lab("Add photos to this folder (you can pick many at once)",fi));
+  gal.appendChild(st);
+  if(!fo.photos.length){gal.appendChild(el("div","st","This folder is empty. Add photos above."));return;}
+  gal.appendChild(el("h3",null,"Tick the photos for the banner (more than 3 is fine)"));
+  var boxes=[],grid=el("div","grid");
+  fo.photos.forEach(function(u,idx){
+    var card=el("div","card"),im=el("img");im.alt=fo.name;im.src=u;card.appendChild(im);
+    var cb=el("input");cb.type="checkbox";boxes.push(cb);
+    var l=el("label","chk");l.appendChild(cb);l.appendChild(document.createTextNode("Select"));card.appendChild(l);
+    card.appendChild(g_btn("Delete","bad",function(){
+      if(!confirm("Delete this photo?"))return;
+      fo.photos.splice(idx,1);all[k]=fo;p_store(all);g_folder(k,"Photo deleted.");}));
+    grid.appendChild(card);});
+  gal.appendChild(grid);
+  gal.appendChild(g_btn("Select all","sec",function(){var on=boxes.some(function(b){return !b.checked;});boxes.forEach(function(b){b.checked=on;});}));
+  var si=el("input");si.type="number";si.min=3;si.max=600;si.value=(C.photo&&C.photo.secs)||30;
+  gal.appendChild(g_lab("Change photo every (seconds)",si));
+  var st2=el("div","st","");
+  gal.appendChild(g_btn("Use selected photos on banner",null,function(){
+    var list=[];boxes.forEach(function(b,i){if(b.checked)list.push(fo.photos[i]);});
+    if(!list.length){st2.textContent="Tick at least one photo first.";return;}
+    g_useMany(fo.name,list,Math.max(3,parseFloat(si.value)||30));}));
+  gal.appendChild(st2);
 }
 
 function rebuildPanel(){if(panel){panel.remove();panel=null;}buildPanel();try{panel.scrollIntoView();}catch(e){}}
@@ -404,6 +444,7 @@ function buildPanel(){
   panel.appendChild(el("h4",null,"Font"));
   field(panel,"Font for the whole banner (needs internet)","select",function(){return C.font||"";},function(v){C.font=v;},[["","Arial (default)"]].concat(FONTS.map(function(f){return [f[0],f[0]];})));
   C.photo=C.photo||{src:""};
+  field(panel,"Seconds between photos (when several are selected)","number",function(){return C.photo.secs||30;},function(v){C.photo.secs=Math.max(3,v||30);},{min:3,max:600,step:1});
   panel.appendChild(el("h4",null,"Speaker photos"));
   var gb=el("button",null,"Open speaker photo gallery");gb.onclick=g_open;panel.appendChild(gb);
   var rb=el("button","sec","Remove picture from banner");rb.onclick=function(){C.photo={src:""};renderBanner();};panel.appendChild(rb);
