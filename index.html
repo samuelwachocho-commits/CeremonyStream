@@ -136,6 +136,41 @@ body{margin:0;background:var(--bg);color:var(--fg);font-family:Arial,Helvetica,s
 .panel button.sec{background:#666;margin-left:8px}
 #msg{margin-top:10px;font-size:14px}
 .hint{font-size:12px;opacity:.7}
+
+/* Professional, template-specific broadcast graphics */
+.special-banner{width:100%;max-width:1920px;min-height:220px;margin:0 auto;position:relative;overflow:hidden;border-radius:10px;color:#fff;font-family:inherit;box-shadow:0 8px 28px rgba(0,0,0,.22);isolation:isolate}
+.special-banner *{box-sizing:border-box}
+.special-banner .sp-logo{position:absolute;right:2.2%;top:5%;height:clamp(34px,7vw,92px);max-width:16%;object-fit:contain;z-index:3;background:#fff;border-radius:8px;padding:4px}
+.sp-fullscreen{min-height:min(78vh,900px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:7vw;background:linear-gradient(135deg,var(--sp-bg),var(--sp-bg2))}
+.sp-kicker{font-size:clamp(14px,2vw,30px);font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--sp-accent)}
+.sp-title{font-size:clamp(34px,7vw,104px);font-weight:900;line-height:1.02;max-width:90%;text-wrap:balance;text-shadow:0 4px 18px rgba(0,0,0,.25);margin:18px 0}
+.sp-body{font-size:clamp(19px,3vw,44px);line-height:1.25;max-width:86%;font-weight:600}
+.sp-church{margin-top:28px;font-size:clamp(13px,1.7vw,24px);font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.sp-speaker.sp-split{grid-template-columns:minmax(240px,44%) 1fr;min-height:380px}.sp-speaker.sp-split .sp-speaker-photo{min-height:380px}.sp-speaker{min-height:260px;display:grid;grid-template-columns:minmax(160px,27%) 1fr;align-items:stretch;background:linear-gradient(110deg,var(--sp-bg),var(--sp-bg2))}
+.sp-speaker-photo{width:100%;height:100%;min-height:260px;object-fit:cover;object-position:center 25%;border-right:7px solid var(--sp-accent)}
+.sp-speaker-copy{align-self:center;padding:clamp(22px,5vw,72px)}
+.sp-speaker .sp-title{font-size:clamp(30px,5.5vw,76px);max-width:100%;margin:8px 0}
+.sp-speaker .sp-body{font-size:clamp(17px,2.4vw,32px);max-width:100%;color:var(--sp-accent)}
+.sp-scripture{min-height:270px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:clamp(24px,6vw,80px);background:linear-gradient(135deg,var(--sp-bg),var(--sp-bg2))}
+.sp-scripture .sp-title{font-family:Georgia,serif;font-size:clamp(26px,4.6vw,66px);font-weight:700;line-height:1.2;max-width:88%}
+.sp-scripture .sp-body{font-size:clamp(18px,2.6vw,36px);font-weight:800;color:var(--sp-accent)}
+.sp-ticker{min-height:76px;display:flex;align-items:center;overflow:hidden;background:var(--sp-bg);border-left:10px solid var(--sp-accent);border-radius:0;padding:12px 0}
+.sp-ticker-label{flex:0 0 auto;padding:0 22px;font-size:clamp(14px,1.8vw,24px);font-weight:900;color:var(--sp-accent);text-transform:uppercase}
+.sp-ticker-track{white-space:nowrap;font-size:clamp(18px,2.5vw,34px);font-weight:800;animation:spTicker 28s linear infinite;padding-left:4vw}
+@keyframes spTicker{from{transform:translateX(100vw)}to{transform:translateX(-100%)}}
+.sp-countdown{min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px;background:radial-gradient(circle at center,var(--sp-bg2),var(--sp-bg))}
+.sp-countdown-clock{font-variant-numeric:tabular-nums;font-size:clamp(54px,12vw,150px);font-weight:900;line-height:1.1;color:var(--sp-accent);text-shadow:0 5px 24px rgba(0,0,0,.3)}
+.sp-giving{min-height:220px;display:grid;grid-template-columns:1fr auto;align-items:center;gap:28px;padding:clamp(24px,5vw,64px);background:linear-gradient(110deg,var(--sp-bg),var(--sp-bg2))}
+.sp-giving .sp-title{font-size:clamp(28px,4.5vw,64px);max-width:100%;margin:4px 0}
+.sp-giving-number{font-size:clamp(24px,4vw,58px);font-weight:900;color:var(--sp-bg);background:var(--sp-accent);border-radius:14px;padding:18px 26px;white-space:nowrap}
+.sp-edit-group{border:1px solid rgba(120,120,120,.3);border-radius:9px;padding:12px;margin:12px 0;background:var(--card)}
+.sp-edit-group h4{margin:4px 0 10px;color:#ff7a00}
+.control-strip{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center;margin:10px auto;max-width:1000px}
+.control-strip button{padding:10px 16px;border:0;border-radius:7px;background:#ff7a00;color:white;font-weight:800;cursor:pointer}
+.control-strip button.sec{background:#555}
+@media(max-width:620px){.sp-speaker{grid-template-columns:34% 1fr;min-height:190px}.sp-speaker-photo{min-height:190px}.sp-giving{grid-template-columns:1fr;text-align:center}.sp-giving-number{white-space:normal}.special-banner{border-radius:0}}
+@media(prefers-reduced-motion:reduce){.sp-ticker-track{animation:none;white-space:normal}.special-banner *{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}
+
 </style>
 </head>
 <body>
@@ -240,7 +275,8 @@ function mkTicker(date,g1,H,FS){
 }
 function renderBanner(){
   if(banner)banner.remove();
-  clearInterval(timer);clearInterval(clk);clearInterval(phTimer);gen++;var myGen=gen;
+  clearInterval(timer);clearInterval(clk);clearInterval(phTimer);if(window.__ndcSpecialTimer){clearInterval(window.__ndcSpecialTimer);window.__ndcSpecialTimer=null;}gen++;var myGen=gen;
+  if(renderSpecialBanner(myGen))return;
   banner=el("div","banner lay-"+(C.layout||"bars")+(C.anim.banner&&C.anim.banner!=="none"?" fx-"+C.anim.banner:"")+(C.anim.fx==="wave"?" wavefx":""));banner.style.setProperty("--bs",(C.anim.bsecs||3)+"s");banner.style.setProperty("--bars",(C.anim.barsecs||3)+"s");
   var s=banner.style, f=FX[C.anim.fx]||FX.up;s.fontFamily=C.font?"'"+C.font+"',Arial,Helvetica,sans-serif":"";ensureFont(C.font);
   s.setProperty("--enter",f[0]);s.setProperty("--leave",f[1]);s.setProperty("--cin",f[2]||"inset(0)");s.setProperty("--cout",f[3]||"inset(0)");s.setProperty("--fin",f[4]||"none");s.setProperty("--fout",f[5]||"none");s.setProperty("--shine",C.anim.shineSecs+"s");
@@ -252,7 +288,7 @@ function renderBanner(){
   function H(z,k){return "clamp("+(z*k*.45)+"px,"+(z*k)+"vw,"+(z*k*10)+"px)";}
   function FS(z){return "clamp(7px,"+z+"vw,"+(z*10)+"px)";}
   var g1="linear-gradient(90deg,"+C.l1.bg1+","+C.l1.bg2+","+C.l1.bg1+")";
-  var vis=[C.l1.show!==false&&msgs(C.l1.slides,date).length>0,C.l2.show!==false&&msgs(C.l2.slides,date).length>0,C.l3.show!==false&&msgs(C.l3.slides,date).length>0];if(C.layout==="ticker")vis=[msgs([C.l1.slides,C.l2.show!==false?C.l2.slides:"",C.l3.show!==false?C.l3.slides:""].join("\n"),date).length>0];
+  var vis=[C.l1.show!==false&&msgs(C.l1.slides,date).length>0,C.l2.show!==false&&msgs(C.l2.slides,date).length>0,C.l3.show!==false&&msgs(C.l3.slides,date).length>0];if(C.layout==="ticker")vis=[msgs([C.l1.show!==false?C.l1.slides:"",C.l2.show!==false?C.l2.slides:"",C.l3.show!==false?C.l3.slides:""].join("\n"),date).length>0];
   var L=C.layout==="ticker"?[mkTicker(date,g1,H,FS)]:[
     mkLine("l1"+(C.anim.shine?" shine":""),msgs(C.l1.slides,date),H(C.l1.size,2.1),FS(C.l1.size),C.l1.fg,g1),
     mkLine("l2",msgs(C.l2.slides,date),H(C.l2.size,2),FS(C.l2.size),C.l2.fg,C.l2.bg),
@@ -285,6 +321,7 @@ function renderBanner(){
     rest.remove();banner.appendChild(grid);
   }
   if(LIVE){document.body.style.cssText="padding:0;background:transparent";if(C.layout==="tv"||C.layout==="person")banner.style.background="transparent";if(C.layout!=="card")banner.style.maxWidth="none";if(!C.layout||C.layout==="bars"||C.layout==="ticker")banner.style.borderRadius="0";banner.style.boxShadow="none";banner.style.margin="0";}
+  if(C.displayHidden)banner.style.visibility="hidden";
   app.insertBefore(banner,app.firstChild);
   if(saveDock&&saveDock.parentNode===app){app.insertBefore(saveDock,banner.nextSibling);saveDock.style.setProperty("--save-dock-top",(Math.ceil(banner.getBoundingClientRect().height)+8)+"px");}
   if(C.layout==="ticker"){var tk=L[0].track,tb=L[0].box;var go=function(){var cw=tb.clientWidth,tw=tk.offsetWidth;tk.style.setProperty("--from",cw+"px");tk.style.setProperty("--to",(-tw)+"px");tk.style.animationDuration=((cw+tw)/Math.max(20,C.anim.tickerSpeed||90))+"s";};go();setTimeout(go,300);}
@@ -334,6 +371,39 @@ function renderBanner(){
   window.onresize=function(){L.forEach(fit);};
 }
 
+/* Template-specific graphics renderer: each selected template owns its structure and data. */
+function renderSpecialBanner(myGen){
+  var kind=C.template||"base",supported=["speaker","person","guest","lowerthird","scripture","fullscreen","split","ticker","countdown","giving"];
+  if(supported.indexOf(kind)<0)return false;
+  var D=C.details||(C.details={}),photo=(C.photo&&((C.photo.list&&C.photo.list[0])||C.photo.src))||"";
+  var bg=D.bg||"#102b55",bg2=D.bg2||"#164e86",accent=D.accent||"#f4b323",fg=D.fg||"#ffffff";
+  var b=el("div","banner special-banner");b.style.setProperty("--sp-bg",bg);b.style.setProperty("--sp-bg2",bg2);b.style.setProperty("--sp-accent",accent);b.style.color=fg;
+  function node(tag,cls,txt){return el(tag,cls,txt||"");}
+  function logo(){if(C.logo&&C.logo.show&&C.logo.src){var im=el("img","sp-logo");im.src=C.logo.src;im.alt="Church logo";b.appendChild(im);}}
+  if(kind==="speaker"||kind==="person"||kind==="guest"||kind==="lowerthird"||kind==="split"){
+    b.classList.add("sp-speaker");if(kind==="split")b.classList.add("sp-split");
+    if(photo){var im=el("img","sp-speaker-photo");im.src=photo;im.alt=D.speakerName?"Photograph of "+D.speakerName:"Speaker photograph";b.appendChild(im);}else{var ph=node("div","sp-speaker-photo","ADD SPEAKER PHOTO");ph.style.cssText="display:grid;place-items:center;background:rgba(255,255,255,.15);font-weight:900;letter-spacing:.08em";b.appendChild(ph);}
+    var copy=node("div","sp-speaker-copy");copy.appendChild(node("div","sp-kicker",D.speakerChurch||"NEW DISCIPLESHIP CHAPEL GITIRI"));copy.appendChild(node("div","sp-title",D.speakerName||"SPEAKER NAME"));copy.appendChild(node("div","sp-body",D.speakerTitle||"Speaker title / ministry"));if(D.speakerMessage)copy.appendChild(node("div","sp-church",D.speakerMessage));b.appendChild(copy);
+  }else if(kind==="scripture"){
+    b.classList.add("sp-scripture");b.appendChild(node("div","sp-kicker",D.scriptureBook||"TODAY'S SCRIPTURE"));b.appendChild(node("div","sp-title",D.scriptureText||"Enter the Bible verse text"));b.appendChild(node("div","sp-body",D.scriptureReference||"Book 1:1"));
+  }else if(kind==="fullscreen"){
+    b.classList.add("sp-fullscreen");b.appendChild(node("div","sp-kicker",D.announcementKicker||"NEW DISCIPLESHIP CHAPEL GITIRI"));b.appendChild(node("div","sp-title",D.announcementTitle||"YOUR ANNOUNCEMENT TITLE"));b.appendChild(node("div","sp-body",D.announcementBody||"Add supporting announcement details here"));if(D.announcementFooter)b.appendChild(node("div","sp-church",D.announcementFooter));
+  }else if(kind==="ticker"){
+    b.classList.add("sp-ticker");b.appendChild(node("div","sp-ticker-label",D.tickerLabel||"ANNOUNCEMENT"));b.appendChild(node("div","sp-ticker-track",D.tickerText||C.l1.slides||"Welcome to New Discipleship Chapel Gitiri"));
+  }else if(kind==="countdown"){
+    b.classList.add("sp-countdown");b.appendChild(node("div","sp-kicker",D.countdownHeading||"SERVICE STARTS IN"));var clock=node("div","sp-countdown-clock","SET SERVICE TIME");b.appendChild(clock);b.appendChild(node("div","sp-body",D.countdownFooter||"NEW DISCIPLESHIP CHAPEL GITIRI"));
+    var update=function(){var target=D.countdownTarget?new Date(D.countdownTarget).getTime():NaN;if(!Number.isFinite(target)){clock.textContent="SET SERVICE TIME";return;}var left=Math.max(0,target-Date.now()),days=Math.floor(left/86400000),hrs=Math.floor(left%86400000/3600000),mins=Math.floor(left%3600000/60000),secs=Math.floor(left%60000/1000);clock.textContent=(days?days+"d ":"")+[hrs,mins,secs].map(function(n){return String(n).padStart(2,"0");}).join(":");if(left===0)clock.textContent="SERVICE IS STARTING";};update();window.__ndcSpecialTimer=setInterval(update,1000);
+  }else if(kind==="giving"){
+    b.classList.add("sp-giving");var copy=node("div","");copy.appendChild(node("div","sp-kicker",D.givingKicker||"GIVE • SUPPORT THE MINISTRY"));copy.appendChild(node("div","sp-title",D.givingTitle||"GIVE WITH A CHEERFUL HEART"));copy.appendChild(node("div","sp-body",D.givingMessage||"Your generosity supports the work of the ministry"));b.appendChild(copy);var pay=node("div","sp-giving-number",[D.givingMethod,D.givingNumber].filter(Boolean).join(" • ")||"ADD PAYMENT DETAILS");b.appendChild(pay);
+  }
+  logo();
+  if(LIVE){document.body.style.cssText="padding:0;background:transparent";b.style.maxWidth="none";b.style.borderRadius="0";b.style.boxShadow="none";b.style.margin="0";}
+  if(C.displayHidden)b.style.visibility="hidden";
+  app.insertBefore(b,app.firstChild);banner=b;
+  if(saveDock&&saveDock.parentNode===app){app.insertBefore(saveDock,banner.nextSibling);saveDock.style.setProperty("--save-dock-top",(Math.ceil(banner.getBoundingClientRect().height)+8)+"px");}
+  return true;
+}
+
 /* ---------- editor panel ---------- */
 var panel,saveDock=null;
 function mountSaveDock(button,status){
@@ -376,7 +446,7 @@ var PRESETS={
  celebration:{layout:"bars",l1:{bg1:"#9d174d",bg2:"#db2777",fg:"#ffffff",size:2.5,slides:"CELEBRATING TOGETHER!"},l2:{bg:"#fef3c7",fg:"#831843",size:2.2,slides:"HAPPY BIRTHDAY / ANNIVERSARY"},l3:{bg:"#831843",fg:"#ffffff",size:1.6,slides:"MAY GOD BLESS YOU ABUNDANTLY"}},
  social:{layout:"pill",l1:{bg1:"#4c1d95",bg2:"#7c3aed",fg:"#ffffff",size:2.1,slides:"FOLLOW US ONLINE"},l2:{bg:"#ffffff",fg:"#4c1d95",size:1.8,slides:"FACEBOOK • YOUTUBE • INSTAGRAM"},l3:{bg:"#4c1d95",fg:"#ffffff",size:1.5,slides:"@NDCGITIRI"}}
 };
-function g_preset(v){var p=PRESETS[v]||PRESETS.base;["l1","l2","l3"].forEach(function(k){if(p[k])Object.assign(C[k],p[k]);});C.template=v;if(p.layout)C.layout=p.layout;if(p.tag!==undefined)C.tag=p.tag;if(p.clock!==undefined)C.clock=p.clock;}
+function g_preset(v){var p=PRESETS[v]||PRESETS.base;["l1","l2","l3"].forEach(function(k){if(p[k])Object.assign(C[k],p[k]);});C.template=v;if(p.layout)C.layout=p.layout;if(p.tag!==undefined)C.tag=p.tag;if(p.clock!==undefined)C.clock=p.clock;C.details=C.details||{};if(v==="scripture"){C.details.scriptureBook=C.details.scriptureBook||"PSALM";C.details.scriptureReference=C.details.scriptureReference||"PSALM 23:1";C.details.scriptureText=C.details.scriptureText||"The Lord is my shepherd; I shall not want.";}if(v==="countdown"){C.details.countdownHeading=C.details.countdownHeading||"SERVICE STARTS IN";C.details.countdownFooter=C.details.countdownFooter||"NEW DISCIPLESHIP CHAPEL GITIRI";}if(v==="giving"){C.details.givingMethod=C.details.givingMethod||"M-PESA";C.details.givingNumber=C.details.givingNumber||"0723950812";}}
 function g_slug(s){return String(s||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"")||"speaker";}
 function p_load(){try{return JSON.parse(localStorage.getItem("ndcphotos")||"{}");}catch(e){return {};}}
 function p_store(o){try{localStorage.setItem("ndcphotos",JSON.stringify(o));return true;}catch(e){return false;}}
@@ -491,6 +561,38 @@ function buildPanel(){
   pl.appendChild(pi);panel.appendChild(pl);panel.appendChild(pb);
   panel.appendChild(el("h4",null,"Banner style"));
   field(panel,"Choose a banner type (loads a ready-made design)","select",function(){return C.template||C.layout||"base";},function(v){g_preset(v);setTimeout(rebuildPanel,0);},[["base","Classic three-bar banner"],["lowerthird","Lower-third name and title"],["fullscreen","Full-screen announcement"],["split","Split-screen speaker / photo"],["ticker","News ticker / scrolling announcements"],["countdown","Countdown / service starting soon"],["scripture","Scripture verse"],["events","Church events schedule"],["guest","Guest speaker introduction"],["giving","Giving / offering information"],["live","LIVE NOW indicator"],["celebration","Birthday / celebration"],["social","Social media follow banner"],["tv","Professional TV broadcast"],["person","Speaker photo banner"],["pill","Rounded pill"],["card","Tall information card"]]);
+  C.details=C.details||{};var D=C.details;
+  function specialGroup(title,cls){var box=el("div","sp-edit-group "+cls);box.appendChild(el("h4",null,title));panel.appendChild(box);return box;}
+  var speakerFields=specialGroup("Speaker banner details","sp-speaker-fields");
+  field(speakerFields,"Speaker name","text",function(){return D.speakerName||"";},function(v){D.speakerName=v;});
+  field(speakerFields,"Position / title","text",function(){return D.speakerTitle||"";},function(v){D.speakerTitle=v;});
+  field(speakerFields,"Church name","text",function(){return D.speakerChurch||"NEW DISCIPLESHIP CHAPEL GITIRI";},function(v){D.speakerChurch=v;});
+  field(speakerFields,"Additional message (optional)","text",function(){return D.speakerMessage||"";},function(v){D.speakerMessage=v;});
+  var scriptureFields=specialGroup("Scripture banner details","sp-scripture-fields");
+  field(scriptureFields,"Bible book","text",function(){return D.scriptureBook||"";},function(v){D.scriptureBook=v;});
+  field(scriptureFields,"Chapter and verse reference","text",function(){return D.scriptureReference||"";},function(v){D.scriptureReference=v;});
+  field(scriptureFields,"Scripture text","textarea",function(){return D.scriptureText||"";},function(v){D.scriptureText=v;});
+  var fullFields=specialGroup("Full-screen announcement details","sp-full-fields");
+  field(fullFields,"Small heading / church name","text",function(){return D.announcementKicker||"NEW DISCIPLESHIP CHAPEL GITIRI";},function(v){D.announcementKicker=v;});
+  field(fullFields,"Main announcement title","text",function(){return D.announcementTitle||"";},function(v){D.announcementTitle=v;});
+  field(fullFields,"Supporting message","textarea",function(){return D.announcementBody||"";},function(v){D.announcementBody=v;});
+  field(fullFields,"Footer message","text",function(){return D.announcementFooter||"";},function(v){D.announcementFooter=v;});
+  var tickerFields=specialGroup("Scrolling ticker details","sp-ticker-fields");
+  field(tickerFields,"Ticker label","text",function(){return D.tickerLabel||"ANNOUNCEMENT";},function(v){D.tickerLabel=v;});
+  field(tickerFields,"Scrolling announcement text","textarea",function(){return D.tickerText||C.l1.slides||"";},function(v){D.tickerText=v;});
+  var countFields=specialGroup("Countdown details","sp-count-fields");
+  field(countFields,"Countdown heading","text",function(){return D.countdownHeading||"SERVICE STARTS IN";},function(v){D.countdownHeading=v;});
+  field(countFields,"Service start date and time","datetime-local",function(){return D.countdownTarget||"";},function(v){D.countdownTarget=v;});
+  field(countFields,"Footer message","text",function(){return D.countdownFooter||"NEW DISCIPLESHIP CHAPEL GITIRI";},function(v){D.countdownFooter=v;});
+  var givingFields=specialGroup("Giving banner details","sp-giving-fields");
+  field(givingFields,"Heading","text",function(){return D.givingKicker||"GIVE • SUPPORT THE MINISTRY";},function(v){D.givingKicker=v;});
+  field(givingFields,"Giving message","text",function(){return D.givingTitle||"GIVE WITH A CHEERFUL HEART";},function(v){D.givingTitle=v;});
+  field(givingFields,"Payment method (e.g. M-PESA Paybill)","text",function(){return D.givingMethod||"";},function(v){D.givingMethod=v;});
+  field(givingFields,"Paybill / till / account number","text",function(){return D.givingNumber||"";},function(v){D.givingNumber=v;});
+  field(givingFields,"Additional giving message","textarea",function(){return D.givingMessage||"";},function(v){D.givingMessage=v;});
+  var colourFields=specialGroup("Selected banner colours","sp-colour-fields");
+  colorRow(colourFields,[["Background",function(){return D.bg||"#102b55";},function(v){D.bg=v;}],["Second background",function(){return D.bg2||"#164e86";},function(v){D.bg2=v;}],["Accent",function(){return D.accent||"#f4b323";},function(v){D.accent=v;}],["Text",function(){return D.fg||"#ffffff";},function(v){D.fg=v;}]]);
+
   field(panel,"Ticker speed (pixels per second)","number",function(){return C.anim.tickerSpeed;},function(v){C.anim.tickerSpeed=v;},{min:20,max:400,step:10});
   field(panel,"TV style: small tag at top right (empty = hide)","text",function(){return C.tag||"";},function(v){C.tag=v;});
   field(panel,"TV style: show clock","checkbox",function(){return !!C.clock;},function(v){C.clock=v;});
@@ -565,9 +667,8 @@ function buildPanel(){
     if(!gi0){rl=el("label",null,"GitHub repo (yourname/reponame)");ri=el("input");ri.type="text";ri.placeholder="yourname/reponame";
       try{ri.value=localStorage.getItem("ghrepo")||"";}catch(e){}
       ri.onchange=function(){try{localStorage.setItem("ghrepo",ri.value.trim());}catch(e){}};rl.appendChild(ri);panel.appendChild(rl);}
-    var tl=el("label",null,"GitHub token (paste once, stays on this phone only)"),ti=el("input");ti.type="text";ti.placeholder="github_pat_...";
-    try{ti.value=localStorage.getItem("ghtok")||"";}catch(e){}
-    tl.appendChild(ti);panel.appendChild(tl);
+    var tl=el("label",null,"GitHub token (used for this save only; not stored)"),ti=el("input");ti.type="password";ti.autocomplete="off";ti.placeholder="github_pat_...";
+    tl.appendChild(ti);panel.appendChild(tl);panel.appendChild(el("div","hint","For safety, this editor no longer saves your GitHub token in browser storage. Paste it when publishing, then clear the field."));
     var b2=el("button",null,"Save changes");
     b2.onclick=async function(){
       if(ri){try{localStorage.setItem("ghrepo",ri.value.trim());}catch(e){}}
@@ -575,7 +676,6 @@ function buildPanel(){
       if(!gi){m.textContent="Type the repo like this: yourname/reponame";return;}
       var tok=ti.value.replace(/\s+/g,"");
       if(!tok){m.textContent="Paste your GitHub token first.";return;}
-      try{localStorage.setItem("ghtok",tok);}catch(e){}
       m.textContent="Saving...";
       var api="https://api.github.com/repos/"+gi.owner+"/"+gi.repo+"/contents/config.json";
       var H={Authorization:"Bearer "+tok,Accept:"application/vnd.github+json"};
@@ -678,7 +778,21 @@ function buildPanel(){
   [".banner-line1",".banner-line2",".banner-line3"].forEach(function(sel,i){var box=panel.querySelector(sel);if(!box)return;var h=box.querySelector("h4");if(h)h.textContent=labels[i]||"Message";});
   var photoHeading=Array.prototype.find.call(panel.querySelectorAll("h4"),function(x){return x.textContent==="Speaker photos";});
   if(photoHeading){var photoBlock=photoHeading;while(photoBlock&&photoBlock.parentNode===panel&&photoBlock.nextElementSibling&&photoBlock.nextElementSibling.className.indexOf("hint")<0)photoBlock=photoBlock.nextElementSibling;}
-  panel.appendChild(el("div","hint","The editor now follows the selected banner type. Only its relevant message fields are shown. Clear a message or switch off its bar and that part will not appear on the banner."));
+  var professional=["speaker","person","guest","lowerthird","scripture","fullscreen","split","ticker","countdown","giving"].indexOf(kind)>=0;
+  if(professional){[".banner-line1",".banner-line2",".banner-line3"].forEach(function(sel){var n=panel.querySelector(sel);if(n)n.style.display="none";});
+    [".sp-speaker-fields",".sp-scripture-fields",".sp-full-fields",".sp-ticker-fields",".sp-count-fields",".sp-giving-fields"].forEach(function(sel){var n=panel.querySelector(sel);if(n)n.style.display="none";});
+    var active={speaker:".sp-speaker-fields",person:".sp-speaker-fields",guest:".sp-speaker-fields",lowerthird:".sp-speaker-fields",split:".sp-speaker-fields",scripture:".sp-scripture-fields",fullscreen:".sp-full-fields",ticker:".sp-ticker-fields",countdown:".sp-count-fields",giving:".sp-giving-fields"}[kind];
+    var activeNode=active&&panel.querySelector(active);if(activeNode)activeNode.style.display="block";
+    panel.querySelector(".banner-photos").style.display=["speaker","person","guest","lowerthird","split"].indexOf(kind)>=0?"block":"none";
+    panel.querySelector(".sp-colour-fields").style.display="block";
+  }else{[".sp-speaker-fields",".sp-scripture-fields",".sp-full-fields",".sp-ticker-fields",".sp-count-fields",".sp-giving-fields",".sp-colour-fields"].forEach(function(sel){var n=panel.querySelector(sel);if(n)n.style.display="none";});}
+  panel.appendChild(el("div","hint","Each professional banner type has its own editing fields and dedicated layout. The selected banner's fields are shown here; shared animation and logo controls remain available below."));
+  var controls=el("div","control-strip");
+  controls.appendChild(g_btn("Preview draft","sec",function(){renderBanner();try{banner.scrollIntoView({behavior:"smooth",block:"center"});}catch(e){}}));
+  controls.appendChild(g_btn("Take Live",null,function(){C.displayHidden=false;renderBanner();var u=new URL(location.href);u.searchParams.set("live","1");u.searchParams.delete("edit");if(confirm("Open the live display in a separate tab? Save/publish changes first if this is a remote broadcast."))window.open(u.toString(),"_blank");}));
+  controls.appendChild(g_btn("Hide", "sec",function(){C.displayHidden=true;renderBanner();}));
+  controls.appendChild(g_btn("Remove", "bad",function(){if(banner){banner.remove();banner=null;}if(window.__ndcSpecialTimer){clearInterval(window.__ndcSpecialTimer);window.__ndcSpecialTimer=null;}}));
+  panel.appendChild(controls);
   app.appendChild(panel);
 }
 async function save(){
@@ -705,6 +819,7 @@ if(new URLSearchParams(location.search).has("preview")){
 function checkBannerSchedule(){if(!C.scheduleStart&&!C.scheduleEnd)return;var now=Date.now(),a=C.scheduleStart?new Date(C.scheduleStart).getTime():-Infinity,b=C.scheduleEnd?new Date(C.scheduleEnd).getTime():Infinity;var elb=document.querySelector(".banner");if(elb)elb.style.visibility=(now>=a&&now<=b)?"visible":"hidden";}
 setInterval(checkBannerSchedule,1000);
 renderBanner();checkBannerSchedule();
+if(C.autoRotate&&!LIVE){var __keys=Object.keys(PRESETS),__idx=Math.max(0,__keys.indexOf(C.template||"base"));window.__ndcRotate=setInterval(function(){__idx=(__idx+1)%__keys.length;g_preset(__keys[__idx]);renderBanner();},Math.max(5,C.rotateSecs||20)*1000);}
 var pollId=null;
 var ebtn=null;
 function showEditBtn(){
