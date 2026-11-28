@@ -33,6 +33,8 @@ body{margin:0;background:var(--bg);color:var(--fg);font-family:Arial,Helvetica,s
 .gal .card img{width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:6px;background:#ddd;display:block}
 .gal .card button{padding:8px 10px;font-size:13px;margin:4px 4px 0 0}
 .gal .st{font-size:14px;margin:8px 0}
+.banner-fields{border:1px solid rgba(120,120,120,.28);border-radius:8px;padding:10px;margin:10px 0;background:var(--card)}
+.banner-fields h4{margin-top:4px}
 .gal .pv{position:relative;display:inline-block;width:min(360px,100%)}
 .gal .pv canvas{width:100%;height:auto;display:block;border:1px solid #888}
 .gal .guide{position:absolute;left:24%;top:7%;width:52%;height:60%;border:2px dashed rgba(255,0,0,.75);border-radius:50%;pointer-events:none}
@@ -250,7 +252,7 @@ function renderBanner(){
   function H(z,k){return "clamp("+(z*k*.45)+"px,"+(z*k)+"vw,"+(z*k*10)+"px)";}
   function FS(z){return "clamp(7px,"+z+"vw,"+(z*10)+"px)";}
   var g1="linear-gradient(90deg,"+C.l1.bg1+","+C.l1.bg2+","+C.l1.bg1+")";
-  var vis=[C.l1.show!==false,C.l2.show!==false,C.l3.show!==false];if(C.layout==="ticker")vis=[true];
+  var vis=[C.l1.show!==false&&msgs(C.l1.slides,date).length>0,C.l2.show!==false&&msgs(C.l2.slides,date).length>0,C.l3.show!==false&&msgs(C.l3.slides,date).length>0];if(C.layout==="ticker")vis=[msgs([C.l1.slides,C.l2.show!==false?C.l2.slides:"",C.l3.show!==false?C.l3.slides:""].join("\n"),date).length>0];
   var L=C.layout==="ticker"?[mkTicker(date,g1,H,FS)]:[
     mkLine("l1"+(C.anim.shine?" shine":""),msgs(C.l1.slides,date),H(C.l1.size,2.1),FS(C.l1.size),C.l1.fg,g1),
     mkLine("l2",msgs(C.l2.slides,date),H(C.l2.size,2),FS(C.l2.size),C.l2.fg,C.l2.bg),
@@ -353,6 +355,7 @@ function field(parent,label,type,get,set,extra){
   l.appendChild(i);parent.appendChild(l);
 }
 function colorRow(parent,items){var r=el("div","row");items.forEach(function(it){field(r,it[0],"color",it[1],it[2]);});parent.appendChild(r);}
+function groupPanelNodes(start,end,cls){var box=el("div",cls);var nodes=Array.prototype.slice.call(panel.children,start,end);nodes.forEach(function(n){box.appendChild(n);});panel.insertBefore(box,panel.children[start]||null);}
 
 /* ===== speaker photo gallery (photos saved in folders on this phone, no token) ===== */
 var GW=360,GH=450,gal=null;
@@ -494,31 +497,37 @@ function buildPanel(){
   panel.appendChild(el("h4",null,"Font"));
   field(panel,"Font for the whole banner (needs internet)","select",function(){return C.font||"";},function(v){C.font=v;},[["","Arial (default)"]].concat(FONTS.map(function(f){return [f[0],f[0]];})));
   C.photo=C.photo||{src:""};
+  var photoStart=panel.children.length;
   field(panel,"Seconds between photos (when several are selected)","number",function(){return C.photo.secs||30;},function(v){C.photo.secs=Math.max(3,v||30);},{min:3,max:600,step:1});
   panel.appendChild(el("h4",null,"Speaker photos"));
   var gb=el("button",null,"Open speaker photo gallery");gb.onclick=g_open;panel.appendChild(gb);
   var rb=el("button","sec","Remove picture from banner");rb.onclick=function(){C.photo={src:""};renderBanner();};panel.appendChild(rb);
   panel.appendChild(el("div","hint","Photos are saved in folders on this phone. Open the gallery to pick a saved photo or upload a new one. Person style: line 1 = name, line 2 = title or role, line 3 = bottom line."));
   panel.appendChild(el("div","hint","Ticker style joins the messages of all three lines into one moving line."));
+  var photoEnd=panel.children.length;groupPanelNodes(photoStart,photoEnd,"banner-fields banner-photos");
   var h;
+  var line1Start=panel.children.length;
   h=el("h4",null,"Line 1 (top)");panel.appendChild(h);
   field(panel,"Show this bar","checkbox",function(){return C.l1.show!==false;},function(v){C.l1.show=v;});
   field(panel,"Messages (one per line, shown in turn)","textarea",function(){return C.l1.slides;},function(v){C.l1.slides=v;});
   colorRow(panel,[["Colour A","",0],["Colour B","",0],["Text","",0]].map(function(x,i){var k=["bg1","bg2","fg"][i];return [x[0],function(){return C.l1[k];},function(v){C.l1[k]=v;}];}));
   field(panel,"Text size","range",function(){return C.l1.size;},function(v){C.l1.size=v;},{min:1,max:5,step:.1});
+  var line1End=panel.children.length;groupPanelNodes(line1Start,line1End,"banner-fields banner-line1");
 
-  panel.appendChild(el("h4",null,"Line 2 (changing line)"));
+  var line2Start=panel.children.length;panel.appendChild(el("h4",null,"Line 2 (changing line)"));
   field(panel,"Show this bar","checkbox",function(){return C.l2.show!==false;},function(v){C.l2.show=v;});
   field(panel,"Messages (one per line, shown in turn). Type {DATE} for the Sunday date","textarea",function(){return C.l2.slides;},function(v){C.l2.slides=v;});
   field(panel,"Date words (leave empty = automatic coming Sunday)","text",function(){return C.l2.date;},function(v){C.l2.date=v;});
   colorRow(panel,[["Background",function(){return C.l2.bg;},function(v){C.l2.bg=v;}],["Text",function(){return C.l2.fg;},function(v){C.l2.fg=v;}]]);
   field(panel,"Text size","range",function(){return C.l2.size;},function(v){C.l2.size=v;},{min:1,max:5,step:.1});
+  var line2End=panel.children.length;groupPanelNodes(line2Start,line2End,"banner-fields banner-line2");
 
-  panel.appendChild(el("h4",null,"Line 3 (bottom)"));
+  var line3Start=panel.children.length;panel.appendChild(el("h4",null,"Line 3 (bottom)"));
   field(panel,"Show this bar","checkbox",function(){return C.l3.show!==false;},function(v){C.l3.show=v;});
   field(panel,"Messages (one per line, shown in turn)","textarea",function(){return C.l3.slides;},function(v){C.l3.slides=v;});
   colorRow(panel,[["Background",function(){return C.l3.bg;},function(v){C.l3.bg=v;}],["Text",function(){return C.l3.fg;},function(v){C.l3.fg=v;}]]);
   field(panel,"Text size","range",function(){return C.l3.size;},function(v){C.l3.size=v;},{min:1,max:4,step:.1});
+  var line3End=panel.children.length;groupPanelNodes(line3Start,line3End,"banner-fields banner-line3");
 
   panel.appendChild(el("h4",null,"Animation"));
   field(panel,"Effect for all lines","select",function(){return C.anim.fx;},function(v){C.anim.fx=v;},[["type","Delete then type (typewriter)"],["wave","Letters wave up and down"],["drop","Drop in from top"],["rotate","Rotate and zoom"],["skew","Skew slide"],["letters","Letters pop in one by one"],["flip","Flip"],["wipe","Wipe across"],["blur","Blur in and out"],["up","Slide up"],["side","Slide from side"],["fade","Fade"],["zoom","Zoom"]]);
@@ -657,6 +666,19 @@ function buildPanel(){
   aud.onchange=function(){var f=aud.files&&aud.files[0];if(!f)return;try{if(window.__ndcAudio){window.__ndcAudio.pause();URL.revokeObjectURL(window.__ndcAudio.src);}var a=new Audio(URL.createObjectURL(f));a.loop=true;window.__ndcAudio=a;a.play().catch(function(){alert("Tap the play button below to allow audio.");});}catch(e){alert("Audio could not be started in this browser.");}};
   panel.appendChild(g_btn("Play / pause background sound","sec",function(){if(!window.__ndcAudio){alert("Choose an audio file first.");return;}if(window.__ndcAudio.paused)window.__ndcAudio.play();else window.__ndcAudio.pause();}));
   panel.appendChild(el("div","hint","Background sound plays only on this device/browser. It is not embedded into the video stream by this banner page; mix audio in OBS or Prism separately."));
+  // Show only the editing fields that belong to the selected banner design.
+  var kind=C.template||C.layout||"base";
+  var isTicker=kind==="ticker";
+  var isSpeaker=["person","guest","split"].indexOf(kind)>=0;
+  panel.querySelector(".banner-photos").style.display=isSpeaker?"block":"none";
+  panel.querySelector(".banner-line2").style.display=isTicker?"none":"block";
+  panel.querySelector(".banner-line3").style.display=isTicker?"none":"block";
+  var headings={base:["Main heading","Second message","Bottom message"],lowerthird:["Speaker name","Speaker title / role","Church name"],person:["Speaker name","Speaker title / role","Church name"],guest:["Guest speaker name","Guest speaker title","Welcome / church name"],split:["Speaker / guest name","Message / title","Church / live location"],fullscreen:["Main announcement","Supporting message","Church / closing message"],ticker:["Scrolling announcement"],countdown:["Countdown heading","Countdown time / message","Instruction / church name"],scripture:["Scripture heading","Bible verse text","Bible reference"],events:["Events heading","Event details","Additional event / contact"],giving:["Giving heading","Payment details","Giving message"],live:["Live status","Church name","Viewer message"],celebration:["Celebration heading","Person / occasion","Blessing message"],social:["Social media heading","Platforms","Social handle"]};
+  var labels=headings[kind]||headings.base;
+  [".banner-line1",".banner-line2",".banner-line3"].forEach(function(sel,i){var box=panel.querySelector(sel);if(!box)return;var h=box.querySelector("h4");if(h)h.textContent=labels[i]||"Message";});
+  var photoHeading=Array.prototype.find.call(panel.querySelectorAll("h4"),function(x){return x.textContent==="Speaker photos";});
+  if(photoHeading){var photoBlock=photoHeading;while(photoBlock&&photoBlock.parentNode===panel&&photoBlock.nextElementSibling&&photoBlock.nextElementSibling.className.indexOf("hint")<0)photoBlock=photoBlock.nextElementSibling;}
+  panel.appendChild(el("div","hint","The editor now follows the selected banner type. Only its relevant message fields are shown. Clear a message or switch off its bar and that part will not appear on the banner."));
   app.appendChild(panel);
 }
 async function save(){
